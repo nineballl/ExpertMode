@@ -1,0 +1,1272 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!DOCTYPE html>
+<html lang="de-CH" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BVK Pensionsrechner – Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700&family=PT+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+/* ---------- myBVK Design-Tokens ---------- */
+:root{
+  --primary:#004899;       /* BVK-Blau */
+  --secondary:#ffc40a;     /* BVK-Gelb */
+  --secondary-soft:#fde4a0;/* Gelb deaktiviert */
+  --darkgray:#675e54;
+  --text:#1e1e1e;
+  --muted:#7a7a7a;
+  --line:#c8c8c8;
+  --line-strong:#675e54;
+  --panel:#f2f2f2;         /* Eingabespalte */
+  --paper:#ffffff;         /* Ausgabespalte, Inputs */
+  --danger:#c8102e;
+  --svg-color-dark:#675e54; --svg-color-light:#ebebeb; --svg-color-highlight:#ffc40b;
+  --font-sans:"Avenir","Avenir Next","Nunito Sans","Segoe UI",system-ui,sans-serif;
+  --font-serif:"PT Serif",Georgia,serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --primary:#7fb2ff; --text:#eee; --muted:#aaa; --line:#444; --line-strong:#999;
+    --panel:#1f1f1f; --paper:#2a2a2a; --svg-color-dark:#bbb; --svg-color-light:#555;
+  }
+}
+:root[data-theme="dark"]{
+  --primary:#7fb2ff; --text:#eee; --muted:#aaa; --line:#444; --line-strong:#999;
+  --panel:#1f1f1f; --paper:#2a2a2a; --svg-color-dark:#bbb; --svg-color-light:#555;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--paper);color:var(--text);font-family:var(--font-sans);font-size:14px;line-height:1.45}
+button,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+
+/* ---------- Layout ---------- */
+.simulation-wrapper{max-width:1020px;margin:0 auto;display:grid;grid-template-columns:1fr;grid-template-areas:"mode" "output" "input";min-height:100%}
+.simulation-output{grid-area:output;background:var(--paper);padding:18px 16px 28px;position:relative}
+.simulation-input{grid-area:input;background:var(--panel);padding:20px 16px 60px}
+.mode-bar{grid-area:mode;background:var(--panel);padding:16px 16px 4px}
+@media (min-width:992px){
+  .simulation-wrapper{grid-template-columns:1fr 1fr;grid-template-areas:"mode output" "input output";grid-template-rows:auto 1fr}
+  .mode-bar{padding:24px 20px 0 8px}
+  .simulation-input{padding:12px 20px 80px 8px}
+  .simulation-output{padding:18px 24px 40px 40px}
+  .simulation-output-content{position:sticky;top:calc(18px + env(safe-area-inset-top,0px))}
+}
+@media (min-width:1036px){ body{background:linear-gradient(90deg,var(--panel) 50%,var(--paper) 50%)} }
+
+/* ---------- Ansicht Standard / Experte ---------- */
+.mode-switch{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--primary);background:var(--paper);width:100%}
+.mode-switch button{all:unset;box-sizing:border-box;display:flex;flex-direction:column;justify-content:flex-start;align-items:center;text-align:center;padding:12px 14px;cursor:pointer;color:var(--primary);font-size:15px;font-weight:600;line-height:1.2}
+.mode-switch button[aria-checked="true"]{background:var(--primary);color:#fff}
+.mode-switch button:focus-visible{outline:2px solid var(--secondary);outline-offset:2px}
+.mode-switch small{display:block;font-weight:400;font-size:11.5px;line-height:1.35;opacity:.9;margin-top:4px}
+.mode-intro{display:flex;align-items:center;gap:12px;margin:14px 0 2px;padding:10px 14px 10px 10px;background:var(--paper);border-left:3px solid var(--secondary)}
+.mode-intro-icon{flex:none;width:36px;height:36px;border-radius:50%;background:var(--secondary);display:grid;place-items:center}
+.mode-intro-icon svg{width:20px;height:20px}
+.mode-intro p{margin:0;font-size:13.5px;line-height:1.4;font-weight:600;color:var(--primary)}
+.mode-notice{margin:10px 0 0;padding:8px 10px;border-left:3px solid var(--secondary);background:var(--paper);font-size:12px;color:var(--text)}
+.mode-notice[hidden]{display:none}
+.mode-notice .link-btn{margin-right:14px;font-size:12px}
+.mode-hint{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;font-size:12.5px;color:var(--muted);padding:2px 0 0}
+.mode-hint[hidden]{display:none}
+.mode-hint .link-btn{font-size:12.5px;font-weight:600;text-decoration:none}
+.mode-hint .link-btn:hover{text-decoration:underline}
+.expert-badge{display:inline-block;margin-left:6px;padding:1px 6px;border:1px solid var(--darkgray);border-radius:8px;font-size:10px;font-weight:600;line-height:1.4;color:var(--darkgray);vertical-align:middle;font-style:normal}
+.expert-only[hidden]{display:none !important}
+
+/* ---------- Chevron ---------- */
+.chev{width:9px;height:9px;border-left:1.5px solid var(--secondary);border-top:1.5px solid var(--secondary);transform:rotate(45deg);margin:4px 6px 0 12px;flex:none;transition:transform .2s}
+.collapsed>.chev,.chev.down{transform:rotate(225deg);margin-top:-4px}
+@media (prefers-reduced-motion:reduce){.chev{transition:none}}
+
+/* ---------- Sektionen (Stufe 1) ---------- */
+.sim-input-section{margin-bottom:34px}
+.s-is-header{all:unset;box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;width:100%;cursor:pointer;padding:8px 0 6px;border-bottom:1px solid var(--line)}
+.s-is-header:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+.s-is-title{margin:0;font-size:22px;font-weight:400;color:var(--primary);line-height:1.25}
+.s-is-body{padding-top:14px}
+.s-is-body[hidden]{display:none}
+
+/* ---------- Gruppen (Stufe 2) ---------- */
+.sim-input-comp{padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid var(--line)}
+.s-ig-header{all:unset;box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;width:100%;cursor:pointer;padding:2px 0}
+.s-ig-header:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+.s-ig-title{margin:0;font-size:13px;font-weight:700;display:flex;align-items:center;gap:5px}
+.s-ig-body{padding-top:10px}
+.s-ig-body[hidden]{display:none}
+.s-ig-body p{margin:0 0 14px;color:var(--muted);font-size:12.5px}
+
+/* ---------- Zahlenfeld ---------- */
+.form-group{margin:0 0 10px}
+.form-group>label{display:flex;align-items:center;gap:5px;color:var(--muted);font-size:12.5px;margin-bottom:5px}
+.control-group{display:flex;align-items:center;gap:10px}
+.btn-numeric{width:20px;height:20px;flex:none;border-radius:50%;border:none;padding:0;background:var(--secondary);cursor:pointer;position:relative}
+.btn-numeric::before,.btn-numeric.inc::after{content:"";position:absolute;left:50%;top:50%;width:10px;height:1.5px;background:#3a3a3a;transform:translate(-50%,-50%)}
+.btn-numeric.inc::after{transform:translate(-50%,-50%) rotate(90deg)}
+.btn-numeric:disabled{background:var(--secondary-soft);cursor:not-allowed}
+.btn-numeric:disabled::before,.btn-numeric:disabled::after{background:#b9a878}
+.control-group input{flex:1;min-width:0;height:25px;border:1px solid transparent;background:var(--paper);text-align:center;font-size:12.5px;padding:0 8px;font-variant-numeric:tabular-nums;border-radius:0}
+.control-group input:focus{outline:none;border-color:var(--primary)}
+.form-group.invalid input{border-color:var(--danger)}
+.invalid-feedback{color:var(--danger);font-size:12px;margin-top:4px}
+.form-text{color:var(--muted);font-size:11.5px;display:block}
+
+/* ---------- Checkbox ---------- */
+.custom-checkbox{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600;margin:4px 0}
+.custom-checkbox input{appearance:none;-webkit-appearance:none;width:18px;height:18px;margin:0;background:var(--paper);border:none;flex:none;cursor:pointer;display:grid;place-items:center}
+.custom-checkbox input:checked{background:var(--primary)}
+.custom-checkbox input:checked::after{content:"";width:5px;height:9px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg) translate(-1px,-1px)}
+.custom-checkbox.disabled{cursor:not-allowed}
+.custom-checkbox.disabled input{cursor:not-allowed}
+.custom-checkbox.disabled>span:first-of-type{opacity:1}
+.reveal{padding:10px 0 0 26px}
+.stufen-box{padding-left:0}
+.stufe{border-left:3px solid var(--secondary);padding:8px 0 2px 12px;margin:0 0 12px}
+.stufe[hidden]{display:none}
+.stufe-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.stufe-nr{font-size:12.5px;font-weight:700}
+.link-btn{background:none;border:none;padding:2px 0;color:var(--primary);cursor:pointer;font-size:12.5px;text-decoration:underline}
+.link-btn.add{font-weight:600;text-decoration:none;margin:2px 0 10px}
+.link-btn[hidden]{display:none}
+.bg-chart{margin:4px 0 2px}
+.stufen-impact{margin-top:4px}
+.tp-box{padding:6px 0 4px 26px}
+.tp-box[hidden]{display:none}
+.tp-info{font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:2px;margin-top:6px}
+.tp-info b{color:var(--primary);font-weight:600}
+.tp-note{margin:0 0 8px}
+.tp-note[hidden]{display:none}
+.tp-step{border-left:3px solid var(--secondary);padding:2px 0 4px 12px;margin-bottom:14px}
+.tp-step.final{border-left-color:var(--primary)}
+.tp-step-head{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;font-weight:700}
+.tp-step-head span:last-child{font-weight:400;color:var(--muted);white-space:nowrap}
+.tp-step-sub{font-size:11.5px;color:var(--muted);margin:2px 0 2px}
+.tp-step .output-row{padding:5px 0}
+.reveal[hidden]{display:none}
+
+/* ---------- Info-Icon ---------- */
+.info-wrapper{position:relative;display:inline-flex;align-items:center}
+.info-circle{width:12px;height:12px;border-radius:50%;border:1px solid #9a9a9a;background:none;padding:0;cursor:help;color:#8a8a8a;font:italic 700 8px/1 var(--font-serif);display:grid;place-items:center}
+.info-circle.filled{background:#9a9a9a;color:#fff}
+.tooltip{display:none;position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);width:min(260px,70vw);background:var(--darkgray);color:#fff;font:400 12px/1.4 var(--font-sans);font-style:normal;padding:8px 10px;z-index:30;text-align:left}
+.tooltip::after{content:"";position:absolute;top:100%;left:50%;margin-left:-5px;border:5px solid transparent;border-top-color:var(--darkgray)}
+.info-wrapper:hover .tooltip,.info-circle:focus+.tooltip{display:block}
+
+/* ---------- Radio-Karten ---------- */
+.radio-group-next{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:4px 0 14px}
+.radio-card{position:relative}
+.radio-card input{position:absolute;opacity:0;inset:0;margin:0}
+.radio-card label{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:74px;padding:10px 6px;border:1px solid var(--primary);background:var(--paper);color:var(--primary);cursor:pointer;text-align:center}
+.radio-card .rg-title{font:italic 12px/1 var(--font-serif)}
+.radio-card .rg-label{font-size:20px;font-weight:300;line-height:1}
+.radio-card .info-wrapper{position:absolute;top:5px;right:6px}
+.radio-card input:checked+label{background:var(--primary);color:#fff}
+.radio-card input:checked+label .info-circle{border-color:#fff;color:#fff}
+.radio-card input:focus-visible+label{outline:2px solid var(--secondary);outline-offset:2px}
+
+/* ---------- Ausgabe ---------- */
+.out-actions{display:flex;justify-content:flex-end;align-items:center;gap:18px;margin:0 -8px 4px 0}
+.icon-btn{background:none;border:none;padding:4px;cursor:pointer;color:#555;display:grid;place-items:center}
+.close-btn{width:32px;height:32px;border-radius:50%;background:var(--secondary);border:none;cursor:pointer;display:grid;place-items:center;color:#3a3a3a}
+.sim-output-widgets{display:flex;justify-content:space-between;gap:16px;margin-bottom:40px}
+.number--widget{display:flex;flex-direction:column;align-items:center;text-align:center;min-width:130px}
+.number--icon svg{width:58px;height:auto;display:block;margin-bottom:6px}
+.number--index{font-size:23px;font-weight:600;color:var(--primary);line-height:1.2;font-variant-numeric:tabular-nums;letter-spacing:.2px}
+.number--currency{color:var(--muted);font-size:13px;margin-bottom:10px}
+.number--text{font-size:10px;font-weight:600;max-width:120px;line-height:1.3}
+.out-block h4{margin:0 0 14px;font-size:12.5px;font-weight:700}
+.out-block+.out-block{margin-top:30px}
+.output-row{display:flex;justify-content:space-between;gap:16px;color:var(--muted);font-size:12.5px;padding:8px 0;font-variant-numeric:tabular-nums}
+.output-row.sep{border-bottom:1px solid var(--line-strong)}
+.output-row.hl{color:var(--primary)}
+.output-row.total{color:var(--text);font-weight:700;border-top:1px solid var(--line-strong)}
+.output-row .v small{display:block;text-align:right;font-size:11px}
+.expander{all:unset;display:flex;justify-content:flex-end;width:100%;cursor:pointer;padding:6px 0}
+.expander .chev{margin-right:0}
+.toggle-link{all:unset;box-sizing:border-box;display:inline-flex;align-items:center;gap:2px;margin-top:10px;padding:4px 0;cursor:pointer;color:var(--primary);font-size:12.5px;font-weight:600}
+.toggle-link:hover span:first-child{text-decoration:underline}
+.toggle-link:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+.toggle-link .chev{margin:2px 0 0 8px}
+.toggle-link .chev.down{margin-top:-4px}
+.detail-rows{padding:2px 0 4px}
+/* Einkommen & Steuern pro Rentenjahr */
+.tax-table{font-size:12.5px;font-variant-numeric:tabular-nums}
+.tax-row{display:grid;grid-template-columns:minmax(0,1.3fr) repeat(3,minmax(0,1fr));gap:8px;padding:7px 0;color:var(--muted);align-items:baseline}
+.tax-row>span:not(:first-child){text-align:right;white-space:nowrap}
+.tax-row.head{font-size:11px;padding:0 0 6px;border-bottom:1px solid var(--line-strong)}
+.tax-row .net{color:var(--text);font-weight:600}
+.tax-row.hl,.tax-row.hl .net{color:var(--primary)}
+.tax-row small{display:block;font-size:10.5px;color:var(--muted);font-weight:400}
+.tax-sub .tax-row{padding:4px 0;font-size:12px}
+.tax-note{font-size:11px;color:var(--muted);margin-top:8px}
+.detail-rows .output-row{padding:4px 0;font-size:12px}
+.out-note{color:var(--muted);font-size:11px;margin-top:22px}
+.out-warn{color:var(--danger);font-size:12px;margin-top:12px}
+.flash{animation:flash .6s ease-out}
+@keyframes flash{from{background:color-mix(in srgb,var(--secondary) 45%,transparent)}to{background:transparent}}
+@media (prefers-reduced-motion:reduce){.flash{animation:none}}
+
+/* ---------- Demo-Werkzeuge ---------- */
+.dev-fab{position:fixed;left:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:40;background:var(--darkgray);color:#fff;border:none;border-radius:16px;padding:6px 12px;font-size:12px;cursor:pointer;opacity:.85}
+.dev-fab:hover{opacity:1}
+.drawer{position:fixed;top:0;right:0;height:100%;width:min(440px,100%);background:var(--paper);color:var(--text);box-shadow:-8px 0 24px rgba(0,0,0,.15);transform:translateX(100%);transition:transform .25s ease;z-index:50;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.drawer.open{transform:none}
+@media (prefers-reduced-motion:reduce){.drawer{transition:none}}
+.drawer-head{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line)}
+.drawer-head h2{margin:0;font-size:16px;color:var(--primary);font-weight:600}
+.drawer-body{overflow:auto;padding:12px 18px 24px}
+.drawer-note{margin:4px 0 0;padding:8px 10px;border-left:3px solid var(--secondary);background:var(--panel);font-size:12px;color:var(--muted)}
+.drawer-body h3{font-size:13px;margin:16px 0 8px}
+.kv{display:grid;grid-template-columns:1fr 130px;gap:6px 10px;align-items:center;font-size:12.5px}
+.kv input{height:28px;border:1px solid var(--line);padding:0 6px;background:var(--paper);width:100%}
+pre.payload{background:var(--panel);padding:10px;font-size:11px;overflow:auto;max-height:300px;margin:0}
+.btn-ghost{background:none;border:1px solid var(--line);padding:5px 10px;cursor:pointer;font-size:12.5px}
+.btn-ghost:hover{border-color:var(--primary);color:var(--primary)}
+.drawer-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--darkgray);color:#fff;padding:9px 14px;font-size:13px;z-index:60;max-width:90vw;display:none}
+.toast.show{display:block}
+</style>
+</head>
+<body>
+
+<div class="simulation-wrapper">
+  <section class="simulation-output" aria-live="polite">
+    <div class="simulation-output-content">
+      <div class="out-actions">
+        <button class="icon-btn" id="printBtn" type="button" aria-label="Simulation als PDF drucken">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="M7 8V3h10v5"/><rect x="3" y="8" width="18" height="9" rx="1.5"/><rect x="7" y="13" width="10" height="8"/></svg>
+        </button>
+        <button class="close-btn" id="closeBtn" type="button" aria-label="Simulation schliessen">
+          <svg width="12" height="12" viewBox="0 0 12 12" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M1 1l10 10M11 1L1 11"/></svg>
+        </button>
+      </div>
+      <div class="sim-output-widgets">
+        <div class="number--widget">
+          <div class="number--icon"></div>
+          <div class="number--index" id="wGuthaben">–</div>
+          <div class="number--currency">CHF</div>
+          <div class="number--text" id="wGuthabenText">Voraussichtliches Sparguthaben mit 65</div>
+        </div>
+        <div class="number--widget">
+          <div class="number--icon"></div>
+          <div class="number--index" id="wDatum">–</div>
+          <div class="number--currency">Pensionsdatum</div>
+          <div class="number--text">Ihr errechnetes Pensionsdatum</div>
+        </div>
+      </div>
+      <div id="outRows"></div>
+    </div>
+  </section>
+
+  <div class="mode-bar">
+    <div class="mode-switch" role="radiogroup" aria-label="Ansicht des Rechners">
+      <button type="button" role="radio" data-mode="standard">Standard<small>Die wichtigsten Einstellungen zum Berechnen Ihrer Rente</small></button>
+      <button type="button" role="radio" data-mode="expert">Experte<small>Sämtliche Einstellungen mit Zusatzoptionen wie Steuern, Teilpensionierung etc.</small></button>
+    </div>
+    <div class="mode-intro">
+      <span class="mode-intro-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#3a3a3a" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2.2" fill="#fff"/><circle cx="9" cy="17" r="2.2" fill="#fff"/></svg></span>
+      <p>Wählen Sie Ihre persönlichen Einstellungen und passen Sie die Simulation an Ihre Bedürfnisse an.</p>
+    </div>
+    <div class="mode-notice" id="modeNotice" hidden></div>
+  </div>
+
+  <section class="simulation-input">
+    <form id="simForm" onsubmit="return false"></form>
+  </section>
+</div>
+
+<button class="dev-fab" id="devBtn" type="button" aria-controls="drawer" aria-expanded="false">Demo-Werkzeuge</button>
+<aside class="drawer" id="drawer" aria-label="Demo-Werkzeuge">
+  <div class="drawer-head">
+    <h2>Demo-Werkzeuge</h2>
+    <button class="btn-ghost" id="drawerClose" type="button">Schliessen</button>
+  </div>
+  <div class="drawer-body">
+    <p class="drawer-note">Rentenmodelle gemäss Pensionsrechner VR2024, Hochrechnung vereinfacht – Werte nicht verbindlich.</p>
+    <h3>Versichertendaten und Parameter (Mock)</h3>
+    <div class="kv" id="cfgFields"></div>
+    <h3>Feature-Flags</h3>
+    <div id="flagFields"></div>
+    <h3>Darstellung</h3>
+    <button class="btn-ghost" id="themeBtn" type="button">Hell/Dunkel umschalten</button>
+    <h3>Payload an /api/mybvk/simulation-pdf</h3>
+    <pre class="payload" id="payload"></pre>
+    <div class="drawer-actions">
+      <button class="btn-ghost" id="copyPayload" type="button">Payload kopieren</button>
+      <button class="btn-ghost" id="resetAll" type="button">Alles zurücksetzen</button>
+    </div>
+  </div>
+</aside>
+<div class="toast" id="toast" role="status"></div>
+
+<template id="iconTpl">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 122.763 105.471" aria-hidden="true"><g transform="translate(2.909)"><path d="M198.934,208.588a42.384,42.384,0,0,0-14.264,4.42c-15.872,8.438-18.484,22.1-18.484,32.748s4.621,26.319,21.7,40.181H202.55V277.9l17.881,1a40.391,40.391,0,0,0,4.621,7.032h13.461V273.882a96.263,96.263,0,0,0,12.055-10.045c5.826.6,11.853-4.018,14.063-17.479,0-2.009-1-2.612-2.009-2.612a13.664,13.664,0,0,1-6.027-2.009c-.8-1-3.214-9.443-7.634-16.072a23.5,23.5,0,0,1,8.237-10.447c-5.626-2.813-11.452-4.822-22.9-3.616-3.014-.6-8.036-1.808-12.858-2.612" transform="translate(-145.776 -181.466)" fill="none" stroke="var(--svg-color-dark)" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/><ellipse cx="16.072" cy="16.073" rx="16.072" ry="16.073" transform="translate(48.537 0)" fill="var(--svg-color-highlight)"/><path d="M114.227,272.963c-12.182-3.6-24.915-1.633-26.681,3.382s4.2,7.832,7.634,5.224,8.639-11.05-7.634-17.278m51.633-17.881a40.381,40.381,0,0,1,25.515-.2" transform="translate(-87.227 -207.233)" fill="none" stroke="var(--svg-color-light)" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/><path d="M2.99,0A2.99,2.99,0,1,1,0,2.99,2.99,2.99,0,0,1,2.99,0Z" transform="translate(90.728 53.314)" fill="var(--svg-color-highlight)"/></g></svg>
+</template>
+
+<script>
+/* =====================================================================
+   1) KONFIGURATION – Versichertendaten & Rechenparameter (alles Mock,
+      Rechenlogik wird separat definiert)
+   ===================================================================== */
+const DEFAULT_CONFIG = {
+  stichtag:'2026-09-30', geburtsdatum:'1965-03-15', geschlecht:'männlich', partnerzuschlag:false,
+  sparguthaben:525628, jahreslohn:109756, beschaeftigungsgrad:100, koordinationsabzug:26460,
+  agBeitrag:13.6, festZins:3.0, festZinsBis:'2027-06-30',
+  dynaReduktion:1.5,              // jährliche Reduktion «Dyna» bis 75 (%)
+  dynaMethode:'Summe Monatsrenten (PK/S)', // Ermittlung der ausgewiesenen Jahresrenten
+  dynaKorrektur:0.69,             // Abzug in % bei «Jahresbasis mit Korrektur (Beta)»
+  uezNormal:22050, uezPartner:28665, // Überbrückungszuschuss pro Jahr bei BG 100 %
+  uezAusgeschlossen:false,        // Arbeitgeber hat Üz anschlussvertraglich ausgeschlossen
+  offenerVorbezug:60000, maxEinkauf:250000, ahvRente:32760,
+  steuerSkalierung:100, steuerKapital:6
+};
+const CONFIG_LABELS = {
+  stichtag:['Stichtag Sparguthaben','date'], geburtsdatum:['Geburtsdatum','date'],
+  geschlecht:['Geschlecht','select',['männlich','weiblich']], partnerzuschlag:['Partnerzuschlag Üz','bool'], uezAusgeschlossen:['Üz vom Arbeitgeber ausgeschlossen','bool'],
+  sparguthaben:['Sparguthaben aktuell (CHF)'], jahreslohn:['Jahreslohn (CHF)'],
+  beschaeftigungsgrad:['Beschäftigungsgrad (%)'], koordinationsabzug:['Koordinationsabzug (CHF)'],
+  agBeitrag:['AG-Sparbeitrag (%)'], festZins:['Beschlossener Zins (%)'], festZinsBis:['… gültig bis','date'],
+  dynaReduktion:['«Dyna» Reduktion pro Jahr (%)'],
+  dynaMethode:['«Dyna» Jahresrente','select',['Summe Monatsrenten (PK/S)','Jahresbasis mit Korrektur (Beta)','Jahresbasis (bisher)']],
+  dynaKorrektur:['«Dyna» Korrekturfaktor Beta (%)'],
+  uezNormal:['Üz pro Jahr (CHF)'], uezPartner:['Üz mit Partner pro Jahr (CHF)'],
+  offenerVorbezug:['Offener WEF-Vorbezug (CHF)'], maxEinkauf:['Max. Einkauf (CHF)'],
+  ahvRente:['AHV-Rente/Jahr (CHF)'],
+  steuerSkalierung:['Dummy-Einkommenssteuer Skalierung (%)'], steuerKapital:['Kapitalsteuer pauschal (%)']
+};
+
+/* Tarif-Tabellen aus VR2024_Pensoptionsrechner_v1_3_1.xlsm
+   norm / normPlus / dyna / dynaPlus : Umwandlungssätze nach Jahrgang × Alter
+   bwKombi : Barwertfaktor Kombi (Kapitalisierung der Rente bis 75)
+   dynaCap / dynaPlusCap : Cap-Umwandlungssatz «Dyna» für die Rente ab 75
+   bwUez   : Barwertfaktor Überbrückungszuschuss */
+const TABLES = {"norm":{"ages":[55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70],"from":1954,"to":2010,"rows":[[null,null,null,null,null,null,null,null,null,null,null,null,null,null,0.053,0.0549],[null,null,null,null,null,null,null,null,null,null,null,null,null,0.0512,0.053,0.0547],[null,null,null,null,null,null,null,null,null,null,null,null,0.0496,0.0512,0.0528,0.0546],[null,null,null,null,null,null,null,null,null,null,null,0.048,0.0496,0.0511,0.0526,0.0544],[null,null,null,null,null,null,null,null,null,null,0.0466,0.048,0.0494,0.0509,0.0525,0.0542],[null,null,null,null,null,null,null,null,null,0.0453,0.0465,0.0479,0.0492,0.0507,0.0523,0.054],[null,null,null,null,null,null,null,null,0.044,0.0452,0.0464,0.0477,0.0491,0.0506,0.0521,0.0538],[null,null,null,null,null,null,null,0.0428,0.0439,0.0451,0.0463,0.0476,0.0489,0.0504,0.052,0.0536],[null,null,null,null,null,null,0.0417,0.0427,0.0438,0.0449,0.0461,0.0474,0.0488,0.0502,0.0518,0.0534],[null,null,null,null,null,0.0406,0.0415,0.0426,0.0437,0.0448,0.046,0.0473,0.0486,0.0501,0.0516,0.0533],[null,null,null,null,0.0396,0.0405,0.0414,0.0425,0.0435,0.0447,0.0459,0.0471,0.0485,0.0499,0.0515,0.0531],[null,null,null,0.0387,0.0394,0.0404,0.0413,0.0424,0.0434,0.0446,0.0457,0.047,0.0483,0.0498,0.0513,0.0529],[null,null,0.0378,0.0385,0.0394,0.0403,0.0412,0.0423,0.0433,0.0444,0.0456,0.0469,0.0482,0.0496,0.0511,0.0527],[null,0.0369,0.0375,0.0384,0.0393,0.0402,0.0411,0.0421,0.0432,0.0443,0.0455,0.0467,0.0481,0.0495,0.051,0.0526],[0.0359,0.0367,0.0375,0.0383,0.0392,0.0401,0.041,0.042,0.0431,0.0442,0.0454,0.0466,0.0479,0.0493,0.0508,0.0524],[0.0358,0.0366,0.0374,0.0382,0.0391,0.04,0.0409,0.0419,0.043,0.0441,0.0452,0.0465,0.0478,0.0492,0.0507,0.0522],[0.0357,0.0365,0.0373,0.0381,0.039,0.0399,0.0408,0.0418,0.0429,0.044,0.0451,0.0463,0.0476,0.049,0.0505,0.0521],[0.0357,0.0364,0.0372,0.0381,0.0389,0.0398,0.0407,0.0417,0.0428,0.0438,0.045,0.0462,0.0475,0.0489,0.0503,0.0519],[0.0356,0.0364,0.0372,0.038,0.0388,0.0397,0.0406,0.0416,0.0427,0.0437,0.0449,0.0461,0.0474,0.0487,0.0502,0.0518],[0.0355,0.0363,0.0371,0.0379,0.0387,0.0396,0.0405,0.0415,0.0425,0.0436,0.0448,0.046,0.0472,0.0486,0.05,0.0516],[0.0355,0.0362,0.037,0.0378,0.0387,0.0395,0.0405,0.0414,0.0424,0.0435,0.0446,0.0458,0.0471,0.0485,0.0499,0.0514],[0.0354,0.0361,0.0369,0.0377,0.0386,0.0394,0.0404,0.0413,0.0423,0.0434,0.0445,0.0457,0.047,0.0483,0.0497,0.0513],[0.0353,0.0361,0.0368,0.0376,0.0385,0.0394,0.0403,0.0412,0.0422,0.0433,0.0444,0.0456,0.0468,0.0482,0.0496,0.0511],[0.0353,0.036,0.0368,0.0376,0.0384,0.0393,0.0402,0.0411,0.0421,0.0432,0.0443,0.0455,0.0467,0.048,0.0494,0.051],[0.0352,0.0359,0.0367,0.0375,0.0383,0.0392,0.0401,0.041,0.042,0.0431,0.0442,0.0453,0.0466,0.0479,0.0493,0.0508],[0.0351,0.0359,0.0366,0.0374,0.0382,0.0391,0.04,0.0409,0.0419,0.043,0.0441,0.0452,0.0465,0.0478,0.0492,0.0507],[0.0351,0.0358,0.0366,0.0373,0.0382,0.039,0.0399,0.0408,0.0418,0.0429,0.044,0.0451,0.0463,0.0476,0.049,0.0505],[0.035,0.0357,0.0365,0.0373,0.0381,0.0389,0.0398,0.0407,0.0417,0.0428,0.0438,0.045,0.0462,0.0475,0.0489,0.0504],[0.0349,0.0357,0.0364,0.0372,0.038,0.0388,0.0397,0.0407,0.0416,0.0426,0.0437,0.0449,0.0461,0.0474,0.0487,0.0502],[0.0349,0.0356,0.0363,0.0371,0.0379,0.0388,0.0396,0.0406,0.0415,0.0425,0.0436,0.0448,0.046,0.0472,0.0486,0.0501],[0.0348,0.0355,0.0363,0.037,0.0378,0.0387,0.0396,0.0405,0.0414,0.0424,0.0435,0.0446,0.0458,0.0471,0.0485,0.0499],[0.0347,0.0355,0.0362,0.037,0.0378,0.0386,0.0395,0.0404,0.0413,0.0423,0.0434,0.0445,0.0457,0.047,0.0483,0.0498],[0.0347,0.0354,0.0361,0.0369,0.0377,0.0385,0.0394,0.0403,0.0412,0.0422,0.0433,0.0444,0.0456,0.0469,0.0482,0.0496],[0.0346,0.0353,0.0361,0.0368,0.0376,0.0384,0.0393,0.0402,0.0411,0.0421,0.0432,0.0443,0.0455,0.0467,0.0481,0.0495],[0.0346,0.0353,0.036,0.0367,0.0375,0.0384,0.0392,0.0401,0.0411,0.042,0.0431,0.0442,0.0454,0.0466,0.0479,0.0493],[0.0345,0.0352,0.0359,0.0367,0.0375,0.0383,0.0391,0.04,0.041,0.0419,0.043,0.0441,0.0452,0.0465,0.0478,0.0492],[0.0344,0.0351,0.0359,0.0366,0.0374,0.0382,0.039,0.0399,0.0409,0.0418,0.0429,0.044,0.0451,0.0464,0.0477,0.0491],[0.0344,0.0351,0.0358,0.0365,0.0373,0.0381,0.039,0.0398,0.0408,0.0417,0.0428,0.0439,0.045,0.0462,0.0475,0.0489],[0.0343,0.035,0.0357,0.0365,0.0372,0.038,0.0389,0.0398,0.0407,0.0417,0.0427,0.0438,0.0449,0.0461,0.0474,0.0488],[0.0343,0.0349,0.0357,0.0364,0.0372,0.038,0.0388,0.0397,0.0406,0.0416,0.0426,0.0436,0.0448,0.046,0.0473,0.0487],[0.0342,0.0349,0.0356,0.0363,0.0371,0.0379,0.0387,0.0396,0.0405,0.0415,0.0425,0.0435,0.0447,0.0459,0.0472,0.0485],[0.0341,0.0348,0.0355,0.0363,0.037,0.0378,0.0386,0.0395,0.0404,0.0414,0.0424,0.0434,0.0446,0.0458,0.047,0.0484],[0.0341,0.0348,0.0355,0.0362,0.037,0.0377,0.0386,0.0394,0.0403,0.0413,0.0423,0.0433,0.0445,0.0456,0.0469,0.0483],[0.034,0.0347,0.0354,0.0361,0.0369,0.0377,0.0385,0.0393,0.0402,0.0412,0.0422,0.0432,0.0443,0.0455,0.0468,0.0481],[0.034,0.0346,0.0353,0.0361,0.0368,0.0376,0.0384,0.0393,0.0402,0.0411,0.0421,0.0431,0.0442,0.0454,0.0467,0.048],[0.0339,0.0346,0.0353,0.036,0.0367,0.0375,0.0383,0.0392,0.0401,0.041,0.042,0.043,0.0441,0.0453,0.0465,0.0479],[0.0339,0.0345,0.0352,0.0359,0.0367,0.0374,0.0383,0.0391,0.04,0.0409,0.0419,0.0429,0.044,0.0452,0.0464,0.0477],[0.0338,0.0345,0.0352,0.0359,0.0366,0.0374,0.0382,0.039,0.0399,0.0408,0.0418,0.0428,0.0439,0.0451,0.0463,0.0476],[0.0337,0.0344,0.0351,0.0358,0.0365,0.0373,0.0381,0.0389,0.0398,0.0407,0.0417,0.0427,0.0438,0.045,0.0462,0.0475],[0.0337,0.0343,0.035,0.0357,0.0365,0.0372,0.038,0.0389,0.0397,0.0406,0.0416,0.0426,0.0437,0.0448,0.0461,0.0474],[0.0336,0.0343,0.035,0.0357,0.0364,0.0372,0.038,0.0388,0.0397,0.0406,0.0415,0.0425,0.0436,0.0447,0.0459,0.0472],[0.0336,0.0342,0.0349,0.0356,0.0363,0.0371,0.0379,0.0387,0.0396,0.0405,0.0414,0.0424,0.0435,0.0446,0.0458,0.0471],[0.0335,0.0342,0.0349,0.0355,0.0363,0.037,0.0378,0.0386,0.0395,0.0404,0.0413,0.0423,0.0434,0.0445,0.0457,0.047],[0.0335,0.0341,0.0348,0.0355,0.0362,0.037,0.0377,0.0386,0.0394,0.0403,0.0412,0.0422,0.0433,0.0444,0.0456,0.0469],[0.0334,0.0341,0.0347,0.0354,0.0361,0.0369,0.0377,0.0385,0.0393,0.0402,0.0412,0.0422,0.0432,0.0443,0.0455,0.0467],[0.0334,0.034,0.0347,0.0354,0.0361,0.0368,0.0376,0.0384,0.0392,0.0401,0.0411,0.0421,0.0431,0.0442,0.0454,0.0466],[0.0333,0.034,0.0346,0.0353,0.036,0.0367,0.0375,0.0383,0.0392,0.0401,0.041,0.042,0.043,0.0441,0.0453,0.0465]]},"normPlus":{"ages":[55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70],"from":1954,"to":2010,"rows":[[null,null,null,null,null,null,null,null,null,null,null,null,null,null,0.056,0.0579],[null,null,null,null,null,null,null,null,null,null,null,null,null,0.054,0.0558,0.0577],[null,null,null,null,null,null,null,null,null,null,null,null,0.0522,0.0538,0.0556,0.0575],[null,null,null,null,null,null,null,null,null,null,null,0.0505,0.052,0.0536,0.0554,0.0572],[null,null,null,null,null,null,null,null,null,null,0.0489,0.0502,0.0518,0.0534,0.0552,0.057],[null,null,null,null,null,null,null,null,null,0.0474,0.0486,0.0501,0.0516,0.0532,0.055,0.0568],[null,null,null,null,null,null,null,null,0.046,0.0471,0.0485,0.0499,0.0514,0.053,0.0548,0.0566],[null,null,null,null,null,null,null,0.0447,0.0457,0.047,0.0483,0.0497,0.0512,0.0528,0.0546,0.0564],[null,null,null,null,null,null,0.0435,0.0444,0.0456,0.0468,0.0482,0.0496,0.0511,0.0527,0.0544,0.0562],[null,null,null,null,null,0.0423,0.0431,0.0443,0.0454,0.0467,0.048,0.0494,0.0509,0.0525,0.0542,0.056],[null,null,null,null,0.0412,0.042,0.043,0.0441,0.0453,0.0465,0.0479,0.0492,0.0507,0.0523,0.054,0.0558],[null,null,null,0.0401,0.0409,0.0419,0.0429,0.044,0.0452,0.0464,0.0477,0.0491,0.0506,0.0521,0.0538,0.0556],[null,null,0.0391,0.0398,0.0407,0.0417,0.0428,0.0439,0.045,0.0463,0.0476,0.0489,0.0504,0.0519,0.0536,0.0554],[null,0.0382,0.0388,0.0397,0.0406,0.0416,0.0427,0.0438,0.0449,0.0461,0.0474,0.0488,0.0502,0.0518,0.0534,0.0552],[0.037,0.0378,0.0387,0.0396,0.0405,0.0415,0.0425,0.0436,0.0448,0.046,0.0473,0.0486,0.0501,0.0516,0.0532,0.055],[0.0369,0.0377,0.0386,0.0395,0.0404,0.0414,0.0424,0.0435,0.0446,0.0458,0.0471,0.0485,0.0499,0.0514,0.053,0.0548],[0.0368,0.0376,0.0385,0.0394,0.0403,0.0413,0.0423,0.0434,0.0445,0.0457,0.047,0.0483,0.0497,0.0512,0.0528,0.0546],[0.0367,0.0376,0.0384,0.0393,0.0402,0.0412,0.0422,0.0433,0.0444,0.0456,0.0468,0.0482,0.0496,0.0511,0.0527,0.0544],[0.0367,0.0375,0.0383,0.0392,0.0401,0.0411,0.0421,0.0432,0.0443,0.0454,0.0467,0.048,0.0494,0.0509,0.0525,0.0542],[0.0366,0.0374,0.0382,0.0391,0.04,0.041,0.042,0.043,0.0441,0.0453,0.0466,0.0479,0.0492,0.0507,0.0523,0.054],[0.0365,0.0373,0.0381,0.039,0.0399,0.0409,0.0419,0.0429,0.044,0.0452,0.0464,0.0477,0.0491,0.0506,0.0521,0.0538],[0.0364,0.0372,0.0381,0.0389,0.0398,0.0408,0.0418,0.0428,0.0439,0.0451,0.0463,0.0476,0.0489,0.0504,0.052,0.0536],[0.0363,0.0371,0.038,0.0388,0.0397,0.0407,0.0417,0.0427,0.0438,0.0449,0.0461,0.0474,0.0488,0.0502,0.0518,0.0534],[0.0363,0.0371,0.0379,0.0387,0.0396,0.0406,0.0415,0.0426,0.0437,0.0448,0.046,0.0473,0.0486,0.0501,0.0516,0.0533],[0.0362,0.037,0.0378,0.0386,0.0395,0.0405,0.0414,0.0425,0.0435,0.0447,0.0459,0.0471,0.0485,0.0499,0.0514,0.0531],[0.0361,0.0369,0.0377,0.0386,0.0394,0.0404,0.0413,0.0424,0.0434,0.0445,0.0457,0.047,0.0483,0.0498,0.0513,0.0529],[0.036,0.0368,0.0376,0.0385,0.0394,0.0403,0.0412,0.0422,0.0433,0.0444,0.0456,0.0469,0.0482,0.0496,0.0511,0.0527],[0.036,0.0367,0.0375,0.0384,0.0393,0.0402,0.0411,0.0421,0.0432,0.0443,0.0455,0.0467,0.048,0.0495,0.0509,0.0525],[0.0359,0.0367,0.0375,0.0383,0.0392,0.0401,0.041,0.042,0.0431,0.0442,0.0454,0.0466,0.0479,0.0493,0.0508,0.0524],[0.0358,0.0366,0.0374,0.0382,0.0391,0.04,0.0409,0.0419,0.043,0.0441,0.0452,0.0465,0.0478,0.0491,0.0506,0.0522],[0.0357,0.0365,0.0373,0.0381,0.039,0.0399,0.0408,0.0418,0.0428,0.0439,0.0451,0.0463,0.0476,0.049,0.0505,0.052],[0.0357,0.0364,0.0372,0.038,0.0389,0.0398,0.0407,0.0417,0.0427,0.0438,0.045,0.0462,0.0475,0.0488,0.0503,0.0519],[0.0356,0.0363,0.0371,0.038,0.0388,0.0397,0.0406,0.0416,0.0426,0.0437,0.0449,0.0461,0.0473,0.0487,0.0501,0.0517],[0.0355,0.0363,0.0371,0.0379,0.0387,0.0396,0.0405,0.0415,0.0425,0.0436,0.0447,0.0459,0.0472,0.0486,0.05,0.0515],[0.0354,0.0362,0.037,0.0378,0.0386,0.0395,0.0404,0.0414,0.0424,0.0435,0.0446,0.0458,0.0471,0.0484,0.0498,0.0514],[0.0354,0.0361,0.0369,0.0377,0.0385,0.0394,0.0403,0.0413,0.0423,0.0434,0.0445,0.0457,0.0469,0.0483,0.0497,0.0512],[0.0353,0.0361,0.0368,0.0376,0.0385,0.0393,0.0402,0.0412,0.0422,0.0433,0.0444,0.0455,0.0468,0.0481,0.0495,0.051],[0.0352,0.036,0.0367,0.0375,0.0384,0.0392,0.0401,0.0411,0.0421,0.0431,0.0442,0.0454,0.0467,0.048,0.0494,0.0509],[0.0352,0.0359,0.0367,0.0375,0.0383,0.0391,0.04,0.041,0.042,0.043,0.0441,0.0453,0.0465,0.0478,0.0492,0.0507],[0.0351,0.0358,0.0366,0.0374,0.0382,0.0391,0.04,0.0409,0.0419,0.0429,0.044,0.0452,0.0464,0.0477,0.0491,0.0506],[0.035,0.0358,0.0365,0.0373,0.0381,0.039,0.0399,0.0408,0.0418,0.0428,0.0439,0.0451,0.0463,0.0476,0.0489,0.0504],[0.035,0.0357,0.0364,0.0372,0.038,0.0389,0.0398,0.0407,0.0417,0.0427,0.0438,0.0449,0.0461,0.0474,0.0488,0.0503],[0.0349,0.0356,0.0364,0.0372,0.038,0.0388,0.0397,0.0406,0.0416,0.0426,0.0437,0.0448,0.046,0.0473,0.0487,0.0501],[0.0348,0.0356,0.0363,0.0371,0.0379,0.0387,0.0396,0.0405,0.0415,0.0425,0.0436,0.0447,0.0459,0.0472,0.0485,0.05],[0.0348,0.0355,0.0362,0.037,0.0378,0.0386,0.0395,0.0404,0.0414,0.0424,0.0434,0.0446,0.0458,0.047,0.0484,0.0498],[0.0347,0.0354,0.0362,0.0369,0.0377,0.0385,0.0394,0.0403,0.0413,0.0423,0.0433,0.0445,0.0456,0.0469,0.0482,0.0497],[0.0346,0.0354,0.0361,0.0368,0.0376,0.0385,0.0393,0.0402,0.0412,0.0422,0.0432,0.0443,0.0455,0.0468,0.0481,0.0495],[0.0346,0.0353,0.036,0.0368,0.0376,0.0384,0.0392,0.0401,0.0411,0.0421,0.0431,0.0442,0.0454,0.0466,0.048,0.0494],[0.0345,0.0352,0.0359,0.0367,0.0375,0.0383,0.0392,0.04,0.041,0.042,0.043,0.0441,0.0453,0.0465,0.0478,0.0492],[0.0345,0.0352,0.0359,0.0366,0.0374,0.0382,0.0391,0.04,0.0409,0.0419,0.0429,0.044,0.0452,0.0464,0.0477,0.0491],[0.0344,0.0351,0.0358,0.0366,0.0373,0.0381,0.039,0.0399,0.0408,0.0418,0.0428,0.0439,0.045,0.0463,0.0476,0.0489],[0.0343,0.035,0.0357,0.0365,0.0373,0.0381,0.0389,0.0398,0.0407,0.0417,0.0427,0.0438,0.0449,0.0461,0.0474,0.0488],[0.0343,0.035,0.0357,0.0364,0.0372,0.038,0.0388,0.0397,0.0406,0.0416,0.0426,0.0437,0.0448,0.046,0.0473,0.0487],[0.0342,0.0349,0.0356,0.0363,0.0371,0.0379,0.0387,0.0396,0.0405,0.0415,0.0425,0.0436,0.0447,0.0459,0.0472,0.0485],[0.0341,0.0348,0.0355,0.0363,0.037,0.0378,0.0387,0.0395,0.0404,0.0414,0.0424,0.0434,0.0446,0.0458,0.047,0.0484],[0.0341,0.0348,0.0355,0.0362,0.037,0.0377,0.0386,0.0394,0.0403,0.0413,0.0423,0.0433,0.0445,0.0456,0.0469,0.0482],[0.034,0.0347,0.0354,0.0361,0.0369,0.0377,0.0385,0.0393,0.0402,0.0412,0.0422,0.0432,0.0443,0.0455,0.0468,0.0481]]},"dyna":{"ages":[55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70],"from":1954,"to":2010,"rows":[[null,null,null,null,null,null,null,null,null,null,null,null,null,null,0.0574,0.0586],[null,null,null,null,null,null,null,null,null,null,null,null,null,0.0561,0.0572,0.0584],[null,null,null,null,null,null,null,null,null,null,null,null,0.0548,0.0559,0.057,0.0582],[null,null,null,null,null,null,null,null,null,null,null,0.0536,0.0546,0.0557,0.0568,0.058],[null,null,null,null,null,null,null,null,null,null,0.0525,0.0534,0.0545,0.0555,0.0566,0.0578],[null,null,null,null,null,null,null,null,null,0.0514,0.0523,0.0533,0.0543,0.0553,0.0565,0.0576],[null,null,null,null,null,null,null,null,0.0504,0.0513,0.0522,0.0531,0.0541,0.0552,0.0563,0.0574],[null,null,null,null,null,null,null,0.0494,0.0503,0.0511,0.052,0.053,0.054,0.055,0.0561,0.0573],[null,null,null,null,null,null,0.0485,0.0493,0.0501,0.051,0.0519,0.0528,0.0538,0.0548,0.0559,0.0571],[null,null,null,null,null,0.0477,0.0484,0.0492,0.05,0.0508,0.0517,0.0527,0.0536,0.0547,0.0557,0.0569],[null,null,null,null,0.0468,0.0475,0.0483,0.0491,0.0499,0.0507,0.0516,0.0525,0.0535,0.0545,0.0556,0.0567],[null,null,null,0.046,0.0467,0.0474,0.0482,0.0489,0.0497,0.0506,0.0515,0.0524,0.0533,0.0543,0.0554,0.0565],[null,null,0.0453,0.046,0.0466,0.0473,0.0481,0.0488,0.0496,0.0504,0.0513,0.0522,0.0532,0.0542,0.0552,0.0563],[null,0.0446,0.0452,0.0459,0.0465,0.0472,0.048,0.0487,0.0495,0.0503,0.0512,0.0521,0.053,0.054,0.055,0.0561],[0.0439,0.0445,0.0451,0.0458,0.0464,0.0471,0.0478,0.0486,0.0494,0.0502,0.051,0.0519,0.0529,0.0538,0.0549,0.056],[0.0438,0.0444,0.045,0.0457,0.0463,0.047,0.0477,0.0485,0.0492,0.0501,0.0509,0.0518,0.0527,0.0537,0.0547,0.0558],[0.0437,0.0443,0.0449,0.0456,0.0462,0.0469,0.0476,0.0484,0.0491,0.0499,0.0508,0.0516,0.0526,0.0535,0.0545,0.0556],[0.0436,0.0442,0.0448,0.0455,0.0461,0.0468,0.0475,0.0482,0.049,0.0498,0.0506,0.0515,0.0524,0.0534,0.0544,0.0554],[0.0435,0.0441,0.0448,0.0454,0.046,0.0467,0.0474,0.0481,0.0489,0.0497,0.0505,0.0514,0.0523,0.0532,0.0542,0.0553],[0.0435,0.0441,0.0447,0.0453,0.0459,0.0466,0.0473,0.048,0.0488,0.0496,0.0504,0.0512,0.0521,0.0531,0.0541,0.0551],[0.0434,0.044,0.0446,0.0452,0.0458,0.0465,0.0472,0.0479,0.0487,0.0494,0.0502,0.0511,0.052,0.0529,0.0539,0.0549],[0.0433,0.0439,0.0445,0.0451,0.0458,0.0464,0.0471,0.0478,0.0485,0.0493,0.0501,0.051,0.0518,0.0528,0.0537,0.0548],[0.0432,0.0438,0.0444,0.045,0.0457,0.0463,0.047,0.0477,0.0484,0.0492,0.05,0.0508,0.0517,0.0526,0.0536,0.0546],[0.0432,0.0437,0.0443,0.0449,0.0456,0.0462,0.0469,0.0476,0.0483,0.0491,0.0499,0.0507,0.0516,0.0525,0.0534,0.0544],[0.0431,0.0437,0.0442,0.0449,0.0455,0.0461,0.0468,0.0475,0.0482,0.049,0.0497,0.0506,0.0514,0.0523,0.0533,0.0543],[0.043,0.0436,0.0442,0.0448,0.0454,0.046,0.0467,0.0474,0.0481,0.0488,0.0496,0.0504,0.0513,0.0522,0.0531,0.0541],[0.0429,0.0435,0.0441,0.0447,0.0453,0.0459,0.0466,0.0473,0.048,0.0487,0.0495,0.0503,0.0511,0.052,0.053,0.0539],[0.0429,0.0434,0.044,0.0446,0.0452,0.0458,0.0465,0.0472,0.0479,0.0486,0.0494,0.0502,0.051,0.0519,0.0528,0.0538],[0.0428,0.0434,0.0439,0.0445,0.0451,0.0457,0.0464,0.0471,0.0478,0.0485,0.0492,0.05,0.0509,0.0517,0.0527,0.0536],[0.0427,0.0433,0.0438,0.0444,0.045,0.0456,0.0463,0.047,0.0477,0.0484,0.0491,0.0499,0.0507,0.0516,0.0525,0.0535],[0.0427,0.0432,0.0438,0.0443,0.0449,0.0456,0.0462,0.0469,0.0475,0.0483,0.049,0.0498,0.0506,0.0515,0.0524,0.0533],[0.0426,0.0431,0.0437,0.0443,0.0449,0.0455,0.0461,0.0468,0.0474,0.0481,0.0489,0.0497,0.0505,0.0513,0.0522,0.0532],[0.0425,0.0431,0.0436,0.0442,0.0448,0.0454,0.046,0.0467,0.0473,0.048,0.0488,0.0495,0.0503,0.0512,0.0521,0.053],[0.0424,0.043,0.0435,0.0441,0.0447,0.0453,0.0459,0.0466,0.0472,0.0479,0.0487,0.0494,0.0502,0.0511,0.0519,0.0529],[0.0424,0.0429,0.0435,0.044,0.0446,0.0452,0.0458,0.0465,0.0471,0.0478,0.0485,0.0493,0.0501,0.0509,0.0518,0.0527],[0.0423,0.0428,0.0434,0.0439,0.0445,0.0451,0.0457,0.0464,0.047,0.0477,0.0484,0.0492,0.05,0.0508,0.0517,0.0526],[0.0422,0.0428,0.0433,0.0439,0.0444,0.045,0.0456,0.0463,0.0469,0.0476,0.0483,0.0491,0.0498,0.0507,0.0515,0.0524],[0.0422,0.0427,0.0432,0.0438,0.0443,0.0449,0.0455,0.0462,0.0468,0.0475,0.0482,0.0489,0.0497,0.0505,0.0514,0.0523],[0.0421,0.0426,0.0432,0.0437,0.0443,0.0448,0.0454,0.0461,0.0467,0.0474,0.0481,0.0488,0.0496,0.0504,0.0512,0.0521],[0.042,0.0426,0.0431,0.0436,0.0442,0.0448,0.0454,0.046,0.0466,0.0473,0.048,0.0487,0.0495,0.0503,0.0511,0.052],[0.042,0.0425,0.043,0.0436,0.0441,0.0447,0.0453,0.0459,0.0465,0.0472,0.0479,0.0486,0.0494,0.0501,0.051,0.0518],[0.0419,0.0424,0.0429,0.0435,0.044,0.0446,0.0452,0.0458,0.0464,0.0471,0.0478,0.0485,0.0492,0.05,0.0508,0.0517],[0.0418,0.0423,0.0429,0.0434,0.0439,0.0445,0.0451,0.0457,0.0463,0.047,0.0477,0.0484,0.0491,0.0499,0.0507,0.0516],[0.0418,0.0423,0.0428,0.0433,0.0439,0.0444,0.045,0.0456,0.0462,0.0469,0.0476,0.0483,0.049,0.0498,0.0506,0.0514],[0.0417,0.0422,0.0427,0.0432,0.0438,0.0443,0.0449,0.0455,0.0461,0.0468,0.0474,0.0481,0.0489,0.0496,0.0504,0.0513],[0.0416,0.0421,0.0427,0.0432,0.0437,0.0443,0.0448,0.0454,0.046,0.0467,0.0473,0.048,0.0488,0.0495,0.0503,0.0512],[0.0416,0.0421,0.0426,0.0431,0.0436,0.0442,0.0448,0.0453,0.0459,0.0466,0.0472,0.0479,0.0486,0.0494,0.0502,0.051],[0.0415,0.042,0.0425,0.043,0.0436,0.0441,0.0447,0.0452,0.0459,0.0465,0.0471,0.0478,0.0485,0.0493,0.0501,0.0509],[0.0415,0.0419,0.0424,0.043,0.0435,0.044,0.0446,0.0452,0.0458,0.0464,0.047,0.0477,0.0484,0.0492,0.0499,0.0508],[0.0414,0.0419,0.0424,0.0429,0.0434,0.0439,0.0445,0.0451,0.0457,0.0463,0.0469,0.0476,0.0483,0.049,0.0498,0.0506],[0.0413,0.0418,0.0423,0.0428,0.0433,0.0439,0.0444,0.045,0.0456,0.0462,0.0468,0.0475,0.0482,0.0489,0.0497,0.0505],[0.0413,0.0418,0.0422,0.0427,0.0433,0.0438,0.0443,0.0449,0.0455,0.0461,0.0467,0.0474,0.0481,0.0488,0.0496,0.0504],[0.0412,0.0417,0.0422,0.0427,0.0432,0.0437,0.0443,0.0448,0.0454,0.046,0.0466,0.0473,0.048,0.0487,0.0494,0.0502],[0.0412,0.0416,0.0421,0.0426,0.0431,0.0436,0.0442,0.0447,0.0453,0.0459,0.0465,0.0472,0.0479,0.0486,0.0493,0.0501],[0.0411,0.0416,0.042,0.0425,0.043,0.0436,0.0441,0.0446,0.0452,0.0458,0.0464,0.0471,0.0478,0.0485,0.0492,0.05],[0.041,0.0415,0.042,0.0425,0.043,0.0435,0.044,0.0446,0.0451,0.0457,0.0463,0.047,0.0476,0.0483,0.0491,0.0498],[0.041,0.0414,0.0419,0.0424,0.0429,0.0434,0.0439,0.0445,0.045,0.0456,0.0462,0.0469,0.0475,0.0482,0.049,0.0497]]},"dynaPlus":{"ages":[55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70],"from":1954,"to":2010,"rows":[[null,null,null,null,null,null,null,null,null,null,null,null,null,null,0.0604,0.0618],[null,null,null,null,null,null,null,null,null,null,null,null,null,0.0589,0.0602,0.0616],[null,null,null,null,null,null,null,null,null,null,null,null,0.0574,0.0587,0.0599,0.0613],[null,null,null,null,null,null,null,null,null,null,null,0.0561,0.0572,0.0584,0.0597,0.0611],[null,null,null,null,null,null,null,null,null,null,0.0548,0.0559,0.057,0.0582,0.0595,0.0608],[null,null,null,null,null,null,null,null,null,0.0536,0.0546,0.0557,0.0568,0.058,0.0593,0.0606],[null,null,null,null,null,null,null,null,0.0524,0.0534,0.0544,0.0555,0.0566,0.0578,0.0591,0.0604],[null,null,null,null,null,null,null,0.0513,0.0523,0.0532,0.0542,0.0553,0.0564,0.0576,0.0589,0.0602],[null,null,null,null,null,null,0.0503,0.0512,0.0521,0.0531,0.0541,0.0551,0.0563,0.0574,0.0586,0.0599],[null,null,null,null,null,0.0493,0.0502,0.051,0.0519,0.0529,0.0539,0.055,0.0561,0.0572,0.0584,0.0597],[null,null,null,null,0.0484,0.0492,0.05,0.0509,0.0518,0.0527,0.0537,0.0548,0.0559,0.057,0.0582,0.0595],[null,null,null,0.0475,0.0483,0.0491,0.0499,0.0508,0.0517,0.0526,0.0536,0.0546,0.0557,0.0568,0.058,0.0593],[null,null,0.0467,0.0474,0.0482,0.0489,0.0498,0.0506,0.0515,0.0524,0.0534,0.0544,0.0555,0.0566,0.0578,0.0591],[null,0.0459,0.0466,0.0473,0.048,0.0488,0.0496,0.0505,0.0514,0.0523,0.0533,0.0543,0.0553,0.0565,0.0576,0.0589],[0.0451,0.0458,0.0465,0.0472,0.0479,0.0487,0.0495,0.0503,0.0512,0.0521,0.0531,0.0541,0.0552,0.0563,0.0574,0.0587],[0.045,0.0457,0.0463,0.0471,0.0478,0.0486,0.0494,0.0502,0.0511,0.052,0.0529,0.0539,0.055,0.0561,0.0572,0.0584],[0.0449,0.0456,0.0462,0.047,0.0477,0.0485,0.0492,0.0501,0.0509,0.0518,0.0528,0.0538,0.0548,0.0559,0.057,0.0582],[0.0448,0.0455,0.0461,0.0469,0.0476,0.0483,0.0491,0.0499,0.0508,0.0517,0.0526,0.0536,0.0546,0.0557,0.0568,0.058],[0.0447,0.0454,0.046,0.0467,0.0475,0.0482,0.049,0.0498,0.0507,0.0515,0.0525,0.0534,0.0545,0.0555,0.0567,0.0578],[0.0446,0.0453,0.0459,0.0466,0.0474,0.0481,0.0489,0.0497,0.0505,0.0514,0.0523,0.0533,0.0543,0.0554,0.0565,0.0576],[0.0445,0.0452,0.0458,0.0465,0.0472,0.048,0.0488,0.0496,0.0504,0.0513,0.0522,0.0531,0.0541,0.0552,0.0563,0.0574],[0.0444,0.0451,0.0457,0.0464,0.0471,0.0479,0.0486,0.0494,0.0503,0.0511,0.052,0.053,0.054,0.055,0.0561,0.0572],[0.0444,0.045,0.0457,0.0463,0.047,0.0478,0.0485,0.0493,0.0501,0.051,0.0519,0.0528,0.0538,0.0548,0.0559,0.0571],[0.0443,0.0449,0.0456,0.0462,0.0469,0.0476,0.0484,0.0492,0.05,0.0508,0.0517,0.0527,0.0536,0.0547,0.0557,0.0569],[0.0442,0.0448,0.0455,0.0461,0.0468,0.0475,0.0483,0.0491,0.0499,0.0507,0.0516,0.0525,0.0535,0.0545,0.0555,0.0567],[0.0441,0.0447,0.0454,0.046,0.0467,0.0474,0.0482,0.0489,0.0497,0.0506,0.0514,0.0524,0.0533,0.0543,0.0554,0.0565],[0.044,0.0446,0.0453,0.0459,0.0466,0.0473,0.048,0.0488,0.0496,0.0504,0.0513,0.0522,0.0532,0.0541,0.0552,0.0563],[0.0439,0.0445,0.0452,0.0458,0.0465,0.0472,0.0479,0.0487,0.0495,0.0503,0.0512,0.0521,0.053,0.054,0.055,0.0561],[0.0438,0.0445,0.0451,0.0457,0.0464,0.0471,0.0478,0.0486,0.0493,0.0502,0.051,0.0519,0.0528,0.0538,0.0548,0.0559],[0.0438,0.0444,0.045,0.0456,0.0463,0.047,0.0477,0.0485,0.0492,0.05,0.0509,0.0518,0.0527,0.0537,0.0547,0.0557],[0.0437,0.0443,0.0449,0.0455,0.0462,0.0469,0.0476,0.0483,0.0491,0.0499,0.0507,0.0516,0.0525,0.0535,0.0545,0.0556],[0.0436,0.0442,0.0448,0.0455,0.0461,0.0468,0.0475,0.0482,0.049,0.0498,0.0506,0.0515,0.0524,0.0533,0.0543,0.0554],[0.0435,0.0441,0.0447,0.0454,0.046,0.0467,0.0474,0.0481,0.0489,0.0496,0.0505,0.0513,0.0522,0.0532,0.0542,0.0552],[0.0434,0.044,0.0446,0.0453,0.0459,0.0466,0.0473,0.048,0.0487,0.0495,0.0503,0.0512,0.0521,0.053,0.054,0.055],[0.0434,0.0439,0.0446,0.0452,0.0458,0.0465,0.0472,0.0479,0.0486,0.0494,0.0502,0.051,0.0519,0.0529,0.0538,0.0549],[0.0433,0.0439,0.0445,0.0451,0.0457,0.0464,0.0471,0.0478,0.0485,0.0493,0.0501,0.0509,0.0518,0.0527,0.0537,0.0547],[0.0432,0.0438,0.0444,0.045,0.0456,0.0463,0.0469,0.0477,0.0484,0.0491,0.0499,0.0508,0.0516,0.0526,0.0535,0.0545],[0.0431,0.0437,0.0443,0.0449,0.0455,0.0462,0.0468,0.0475,0.0483,0.049,0.0498,0.0506,0.0515,0.0524,0.0534,0.0544],[0.0431,0.0436,0.0442,0.0448,0.0454,0.0461,0.0467,0.0474,0.0482,0.0489,0.0497,0.0505,0.0514,0.0523,0.0532,0.0542],[0.043,0.0435,0.0441,0.0447,0.0453,0.046,0.0466,0.0473,0.048,0.0488,0.0496,0.0504,0.0512,0.0521,0.053,0.054],[0.0429,0.0435,0.044,0.0446,0.0452,0.0459,0.0465,0.0472,0.0479,0.0487,0.0494,0.0502,0.0511,0.052,0.0529,0.0539],[0.0428,0.0434,0.044,0.0445,0.0452,0.0458,0.0464,0.0471,0.0478,0.0485,0.0493,0.0501,0.0509,0.0518,0.0527,0.0537],[0.0428,0.0433,0.0439,0.0445,0.0451,0.0457,0.0463,0.047,0.0477,0.0484,0.0492,0.05,0.0508,0.0517,0.0526,0.0535],[0.0427,0.0432,0.0438,0.0444,0.045,0.0456,0.0462,0.0469,0.0476,0.0483,0.0491,0.0498,0.0507,0.0515,0.0524,0.0534],[0.0426,0.0432,0.0437,0.0443,0.0449,0.0455,0.0461,0.0468,0.0475,0.0482,0.0489,0.0497,0.0505,0.0514,0.0523,0.0532],[0.0425,0.0431,0.0436,0.0442,0.0448,0.0454,0.046,0.0467,0.0474,0.0481,0.0488,0.0496,0.0504,0.0512,0.0521,0.0531],[0.0425,0.043,0.0436,0.0441,0.0447,0.0453,0.0459,0.0466,0.0473,0.048,0.0487,0.0495,0.0503,0.0511,0.052,0.0529],[0.0424,0.0429,0.0435,0.044,0.0446,0.0452,0.0458,0.0465,0.0472,0.0479,0.0486,0.0493,0.0501,0.051,0.0518,0.0527],[0.0423,0.0429,0.0434,0.044,0.0445,0.0451,0.0457,0.0464,0.0471,0.0477,0.0485,0.0492,0.05,0.0508,0.0517,0.0526],[0.0422,0.0428,0.0433,0.0439,0.0445,0.045,0.0457,0.0463,0.0469,0.0476,0.0483,0.0491,0.0499,0.0507,0.0515,0.0524],[0.0422,0.0427,0.0432,0.0438,0.0444,0.0449,0.0456,0.0462,0.0468,0.0475,0.0482,0.049,0.0497,0.0505,0.0514,0.0523],[0.0421,0.0426,0.0432,0.0437,0.0443,0.0449,0.0455,0.0461,0.0467,0.0474,0.0481,0.0488,0.0496,0.0504,0.0513,0.0521],[0.042,0.0426,0.0431,0.0436,0.0442,0.0448,0.0454,0.046,0.0466,0.0473,0.048,0.0487,0.0495,0.0503,0.0511,0.052],[0.042,0.0425,0.043,0.0436,0.0441,0.0447,0.0453,0.0459,0.0465,0.0472,0.0479,0.0486,0.0494,0.0501,0.051,0.0518],[0.0419,0.0424,0.0429,0.0435,0.044,0.0446,0.0452,0.0458,0.0464,0.0471,0.0478,0.0485,0.0492,0.05,0.0508,0.0517],[0.0418,0.0423,0.0429,0.0434,0.0439,0.0445,0.0451,0.0457,0.0463,0.047,0.0477,0.0484,0.0491,0.0499,0.0507,0.0516],[0.0418,0.0423,0.0428,0.0433,0.0439,0.0444,0.045,0.0456,0.0462,0.0469,0.0476,0.0483,0.049,0.0498,0.0506,0.0514]]},"bwKombi":{"ages":[55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70],"from":1954,"to":2010,"rows":[[null,null,null,null,null,null,null,null,null,null,null,null,null,null,5.553,4.681],[null,null,null,null,null,null,null,null,null,null,null,null,null,6.411,5.556,4.683],[null,null,null,null,null,null,null,null,null,null,null,null,7.255,6.415,5.558,4.685],[null,null,null,null,null,null,null,null,null,null,null,8.086,7.259,6.418,5.561,4.687],[null,null,null,null,null,null,null,null,null,null,8.905,8.091,7.263,6.421,5.564,4.689],[null,null,null,null,null,null,null,null,null,9.712,8.91,8.096,7.267,6.424,5.566,4.691],[null,null,null,null,null,null,null,null,10.506,9.718,8.915,8.1,7.271,6.428,5.569,4.693],[null,null,null,null,null,null,null,11.288,10.512,9.723,8.92,8.104,7.275,6.431,5.571,4.695],[null,null,null,null,null,null,12.057,11.294,10.518,9.729,8.925,8.109,7.278,6.434,5.573,4.696],[null,null,null,null,null,12.815,12.064,11.301,10.524,9.734,8.93,8.113,7.282,6.437,5.576,4.698],[null,null,null,null,13.561,12.822,12.071,11.307,10.53,9.74,8.935,8.117,7.286,6.44,5.578,4.7],[null,null,null,14.297,13.569,12.829,12.078,11.313,10.536,9.745,8.939,8.121,7.289,6.442,5.58,4.702],[null,null,15.022,14.305,13.577,12.837,12.084,11.319,10.541,9.75,8.944,8.125,7.292,6.445,5.583,4.703],[null,15.736,15.03,14.313,13.584,12.843,12.091,11.325,10.547,9.755,8.948,8.129,7.296,6.448,5.585,4.705],[16.441,15.745,15.038,14.32,13.591,12.85,12.097,11.331,10.552,9.76,8.953,8.133,7.299,6.451,5.587,4.706],[16.449,15.753,15.046,14.328,13.598,12.857,12.103,11.337,10.558,9.764,8.957,8.136,7.302,6.453,5.589,4.708],[16.458,15.761,15.054,14.335,13.605,12.864,12.109,11.343,10.563,9.769,8.961,8.14,7.305,6.456,5.591,4.71],[16.466,15.769,15.061,14.343,13.612,12.87,12.115,11.348,10.568,9.774,8.965,8.144,7.308,6.459,5.593,4.711],[16.474,15.777,15.069,14.35,13.619,12.876,12.121,11.354,10.573,9.778,8.969,8.147,7.312,6.461,5.595,4.713],[16.482,15.784,15.076,14.357,13.626,12.883,12.127,11.359,10.578,9.783,8.973,8.151,7.315,6.464,5.597,4.714],[16.49,15.792,15.083,14.364,13.632,12.889,12.133,11.364,10.583,9.787,8.977,8.154,7.317,6.466,5.599,4.715],[16.497,15.799,15.091,14.37,13.639,12.895,12.139,11.37,10.587,9.791,8.981,8.158,7.32,6.468,5.601,4.717],[16.505,15.807,15.098,14.377,13.645,12.901,12.144,11.375,10.592,9.796,8.985,8.161,7.323,6.471,5.603,4.718],[16.512,15.814,15.104,14.384,13.651,12.906,12.149,11.38,10.596,9.8,8.989,8.164,7.326,6.473,5.605,4.72],[16.52,15.821,15.111,14.39,13.657,12.912,12.155,11.384,10.601,9.804,8.992,8.167,7.329,6.475,5.606,4.721],[16.527,15.828,15.118,14.396,13.663,12.918,12.16,11.389,10.605,9.808,8.996,8.171,7.331,6.478,5.608,4.722],[16.534,15.835,15.124,14.402,13.669,12.923,12.165,11.394,10.61,9.812,8.999,8.174,7.334,6.48,5.61,4.724],[16.541,15.841,15.131,14.409,13.675,12.929,12.17,11.399,10.614,9.816,9.003,8.177,7.337,6.482,5.612,4.725],[16.548,15.848,15.137,14.415,13.68,12.934,12.175,11.403,10.618,9.819,9.006,8.18,7.339,6.484,5.613,4.726],[16.554,15.854,15.143,14.42,13.686,12.939,12.18,11.408,10.622,9.823,9.01,8.183,7.342,6.486,5.615,4.727],[16.561,15.86,15.149,14.426,13.691,12.944,12.185,11.412,10.626,9.827,9.013,8.185,7.344,6.488,5.617,4.729],[16.567,15.867,15.155,14.432,13.697,12.949,12.189,11.416,10.63,9.83,9.016,8.188,7.347,6.49,5.618,4.73],[16.573,15.873,15.161,14.437,13.702,12.954,12.194,11.421,10.634,9.834,9.019,8.191,7.349,6.492,5.62,4.731],[16.58,15.879,15.166,14.443,13.707,12.959,12.198,11.425,10.638,9.837,9.022,8.194,7.351,6.494,5.621,4.732],[16.586,15.885,15.172,14.448,13.712,12.964,12.203,11.429,10.642,9.841,9.025,8.196,7.353,6.496,5.623,4.733],[16.592,15.89,15.178,14.453,13.717,12.968,12.207,11.433,10.645,9.844,9.028,8.199,7.356,6.498,5.624,4.734],[16.598,15.896,15.183,14.458,13.722,12.973,12.211,11.437,10.649,9.847,9.031,8.202,7.358,6.499,5.626,4.735],[16.603,15.901,15.188,14.464,13.727,12.977,12.216,11.441,10.652,9.85,9.034,8.204,7.36,6.501,5.627,4.736],[16.609,15.907,15.193,14.468,13.731,12.982,12.22,11.444,10.656,9.854,9.037,8.207,7.362,6.503,5.628,4.737],[16.615,15.912,15.199,14.473,13.736,12.986,12.224,11.448,10.659,9.857,9.04,8.209,7.364,6.505,5.63,4.738],[16.62,15.918,15.204,14.478,13.74,12.99,12.228,11.452,10.663,9.86,9.042,8.211,7.366,6.506,5.631,4.739],[16.625,15.923,15.209,14.483,13.745,12.995,12.232,11.455,10.666,9.863,9.045,8.214,7.368,6.508,5.632,4.74],[16.631,15.928,15.213,14.487,13.749,12.999,12.235,11.459,10.669,9.866,9.048,8.216,7.37,6.51,5.634,4.741],[16.636,15.933,15.218,14.492,13.754,13.003,12.239,11.462,10.672,9.868,9.05,8.218,7.372,6.511,5.635,4.742],[16.641,15.938,15.223,14.496,13.758,13.007,12.243,11.466,10.675,9.871,9.053,8.221,7.374,6.513,5.636,4.743],[16.646,15.942,15.227,14.501,13.762,13.011,12.246,11.469,10.679,9.874,9.055,8.223,7.376,6.514,5.637,4.744],[16.651,15.947,15.232,14.505,13.766,13.014,12.25,11.472,10.681,9.877,9.058,8.225,7.378,6.516,5.639,4.745],[16.655,15.952,15.236,14.509,13.77,13.018,12.253,11.476,10.684,9.879,9.06,8.227,7.379,6.517,5.64,4.746],[16.66,15.956,15.241,14.513,13.774,13.022,12.257,11.479,10.687,9.882,9.062,8.229,7.381,6.519,5.641,4.747],[16.665,15.961,15.245,14.518,13.778,13.025,12.26,11.482,10.69,9.885,9.065,8.231,7.383,6.52,5.642,4.748],[16.669,15.965,15.249,14.521,13.781,13.029,12.263,11.485,10.693,9.887,9.067,8.233,7.385,6.522,5.643,4.748],[16.674,15.969,15.253,14.525,13.785,13.032,12.267,11.488,10.696,9.89,9.069,8.235,7.386,6.523,5.644,4.749],[16.678,15.974,15.257,14.529,13.789,13.036,12.27,11.491,10.698,9.892,9.071,8.237,7.388,6.524,5.645,4.75],[16.682,15.978,15.261,14.533,13.792,13.039,12.273,11.494,10.701,9.894,9.074,8.239,7.39,6.526,5.646,4.751],[16.687,15.982,15.265,14.537,13.796,13.042,12.276,11.497,10.704,9.897,9.076,8.241,7.391,6.527,5.647,4.752],[16.691,15.986,15.269,14.54,13.799,13.046,12.279,11.499,10.706,9.899,9.078,8.242,7.393,6.528,5.648,4.752],[16.695,15.99,15.273,14.544,13.803,13.049,12.282,11.502,10.709,9.901,9.08,8.244,7.394,6.529,5.649,4.753]]},"bwUez":{"ages":[55,56,57,58,59,60,61,62,63,64,65],"from":1959,"to":2010,"rows":[[null,null,null,null,null,null,null,null,null,0.396,0],[null,null,null,null,null,null,null,null,0.784,0.396,0],[null,null,null,null,null,null,null,1.164,0.784,0.396,0],[null,null,null,null,null,null,1.537,1.164,0.784,0.396,0],[null,null,null,null,null,1.903,1.537,1.165,0.784,0.396,0],[null,null,null,null,2.262,1.903,1.538,1.165,0.784,0.396,0],[null,null,null,2.615,2.263,1.904,1.538,1.165,0.784,0.396,0],[null,null,2.962,2.616,2.263,1.904,1.538,1.165,0.784,0.396,0],[null,3.303,2.963,2.616,2.263,1.904,1.538,1.165,0.784,0.396,0],[3.638,3.304,2.963,2.617,2.264,1.904,1.538,1.165,0.784,0.396,0],[3.639,3.304,2.964,2.617,2.264,1.905,1.538,1.165,0.785,0.396,0],[3.639,3.305,2.964,2.617,2.264,1.905,1.539,1.165,0.785,0.396,0],[3.64,3.305,2.965,2.618,2.265,1.905,1.539,1.165,0.785,0.396,0],[3.641,3.306,2.965,2.618,2.265,1.905,1.539,1.165,0.785,0.396,0],[3.641,3.306,2.966,2.619,2.265,1.906,1.539,1.166,0.785,0.396,0],[3.642,3.307,2.966,2.619,2.266,1.906,1.539,1.166,0.785,0.396,0],[3.643,3.307,2.966,2.619,2.266,1.906,1.539,1.166,0.785,0.396,0],[3.643,3.308,2.967,2.62,2.266,1.906,1.539,1.166,0.785,0.396,0],[3.644,3.308,2.967,2.62,2.266,1.906,1.54,1.166,0.785,0.396,0],[3.644,3.309,2.968,2.62,2.267,1.907,1.54,1.166,0.785,0.396,0],[3.645,3.309,2.968,2.621,2.267,1.907,1.54,1.166,0.785,0.396,0],[3.645,3.31,2.969,2.621,2.267,1.907,1.54,1.166,0.785,0.396,0],[3.646,3.31,2.969,2.621,2.268,1.907,1.54,1.166,0.785,0.396,0],[3.647,3.311,2.969,2.622,2.268,1.907,1.54,1.166,0.785,0.396,0],[3.647,3.311,2.97,2.622,2.268,1.908,1.54,1.166,0.785,0.396,0],[3.648,3.312,2.97,2.622,2.268,1.908,1.541,1.166,0.785,0.396,0],[3.648,3.312,2.97,2.623,2.269,1.908,1.541,1.166,0.785,0.396,0],[3.649,3.313,2.971,2.623,2.269,1.908,1.541,1.167,0.785,0.396,0],[3.649,3.313,2.971,2.623,2.269,1.908,1.541,1.167,0.785,0.396,0],[3.65,3.314,2.972,2.624,2.269,1.908,1.541,1.167,0.785,0.396,0],[3.65,3.314,2.972,2.624,2.269,1.909,1.541,1.167,0.785,0.396,0],[3.65,3.314,2.972,2.624,2.27,1.909,1.541,1.167,0.785,0.396,0],[3.651,3.315,2.973,2.624,2.27,1.909,1.541,1.167,0.785,0.396,0],[3.651,3.315,2.973,2.625,2.27,1.909,1.541,1.167,0.785,0.396,0],[3.652,3.315,2.973,2.625,2.27,1.909,1.542,1.167,0.785,0.396,0],[3.652,3.316,2.974,2.625,2.27,1.909,1.542,1.167,0.785,0.396,0],[3.653,3.316,2.974,2.625,2.271,1.91,1.542,1.167,0.785,0.396,0],[3.653,3.317,2.974,2.626,2.271,1.91,1.542,1.167,0.785,0.396,0],[3.653,3.317,2.974,2.626,2.271,1.91,1.542,1.167,0.785,0.396,0],[3.654,3.317,2.975,2.626,2.271,1.91,1.542,1.167,0.786,0.397,0],[3.654,3.318,2.975,2.626,2.271,1.91,1.542,1.167,0.786,0.397,0],[3.655,3.318,2.975,2.627,2.272,1.91,1.542,1.167,0.786,0.397,0],[3.655,3.318,2.976,2.627,2.272,1.91,1.542,1.167,0.786,0.397,0],[3.655,3.319,2.976,2.627,2.272,1.91,1.542,1.167,0.786,0.397,0],[3.656,3.319,2.976,2.627,2.272,1.911,1.542,1.168,0.786,0.397,0],[3.656,3.319,2.976,2.627,2.272,1.911,1.543,1.168,0.786,0.397,0],[3.656,3.32,2.977,2.628,2.272,1.911,1.543,1.168,0.786,0.397,0],[3.657,3.32,2.977,2.628,2.273,1.911,1.543,1.168,0.786,0.397,0],[3.657,3.32,2.977,2.628,2.273,1.911,1.543,1.168,0.786,0.397,0],[3.657,3.32,2.977,2.628,2.273,1.911,1.543,1.168,0.786,0.397,0],[3.658,3.321,2.978,2.628,2.273,1.911,1.543,1.168,0.786,0.397,0],[3.658,3.321,2.978,2.629,2.273,1.911,1.543,1.168,0.786,0.397,0]]},"dynaCap":{"ages":[55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70],"from":1954,"to":2010,"rows":[[null,null,null,null,null,null,null,null,null,null,null,null,null,null,0.0524,0.0543],[null,null,null,null,null,null,null,null,null,null,null,null,null,0.0505,0.0522,0.0541],[null,null,null,null,null,null,null,null,null,null,null,null,0.0486,0.0503,0.0521,0.054],[null,null,null,null,null,null,null,null,null,null,null,0.0468,0.0484,0.0501,0.0519,0.0538],[null,null,null,null,null,null,null,null,null,null,0.0451,0.0466,0.0483,0.0499,0.0517,0.0536],[null,null,null,null,null,null,null,null,null,0.0435,0.045,0.0465,0.0481,0.0497,0.0516,0.0534],[null,null,null,null,null,null,null,null,0.042,0.0434,0.0449,0.0463,0.0479,0.0497,0.0514,0.0532],[null,null,null,null,null,null,null,0.0406,0.042,0.0433,0.0447,0.0463,0.0479,0.0495,0.0512,0.0531],[null,null,null,null,null,null,0.0393,0.0405,0.0418,0.0432,0.0446,0.0461,0.0477,0.0493,0.0511,0.0529],[null,null,null,null,null,0.038,0.0392,0.0404,0.0417,0.043,0.0444,0.046,0.0475,0.0492,0.0509,0.0528],[null,null,null,null,0.0367,0.0379,0.0391,0.0403,0.0416,0.0429,0.0444,0.0458,0.0474,0.049,0.0508,0.0526],[null,null,null,0.0356,0.0367,0.0378,0.039,0.0402,0.0415,0.0428,0.0443,0.0457,0.0472,0.0488,0.0506,0.0524],[null,null,0.0345,0.0356,0.0366,0.0377,0.0389,0.0401,0.0414,0.0427,0.0441,0.0456,0.0471,0.0488,0.0504,0.0522],[null,0.0335,0.0344,0.0355,0.0365,0.0376,0.0388,0.04,0.0413,0.0426,0.044,0.0455,0.047,0.0486,0.0502,0.052],[0.0324,0.0334,0.0344,0.0354,0.0364,0.0375,0.0387,0.0399,0.0412,0.0425,0.0438,0.0453,0.0469,0.0484,0.0501,0.0519],[0.0324,0.0333,0.0343,0.0353,0.0364,0.0375,0.0386,0.0398,0.041,0.0424,0.0438,0.0452,0.0467,0.0483,0.05,0.0517],[0.0323,0.0332,0.0342,0.0353,0.0363,0.0374,0.0385,0.0398,0.041,0.0423,0.0437,0.045,0.0466,0.0481,0.0498,0.0516],[0.0322,0.0332,0.0341,0.0352,0.0362,0.0373,0.0384,0.0396,0.0409,0.0422,0.0435,0.045,0.0464,0.048,0.0497,0.0514],[0.0322,0.0331,0.0341,0.0351,0.0361,0.0372,0.0384,0.0395,0.0408,0.0421,0.0434,0.0449,0.0463,0.0479,0.0495,0.0513],[0.0322,0.0331,0.0341,0.035,0.036,0.0371,0.0383,0.0394,0.0407,0.042,0.0433,0.0447,0.0462,0.0478,0.0494,0.0511],[0.0321,0.033,0.034,0.035,0.036,0.0371,0.0382,0.0394,0.0406,0.0418,0.0432,0.0446,0.0461,0.0476,0.0492,0.0509],[0.032,0.0329,0.0339,0.0349,0.036,0.037,0.0381,0.0393,0.0405,0.0417,0.0431,0.0445,0.0459,0.0475,0.049,0.0508],[0.0319,0.0329,0.0338,0.0348,0.0359,0.0369,0.038,0.0392,0.0404,0.0417,0.043,0.0443,0.0458,0.0473,0.049,0.0506],[0.0319,0.0328,0.0337,0.0347,0.0358,0.0368,0.038,0.0391,0.0403,0.0416,0.0429,0.0443,0.0457,0.0472,0.0488,0.0504],[0.0319,0.0328,0.0337,0.0347,0.0357,0.0367,0.0379,0.039,0.0402,0.0415,0.0427,0.0442,0.0455,0.047,0.0487,0.0503],[0.0318,0.0327,0.0337,0.0346,0.0356,0.0367,0.0378,0.0389,0.0401,0.0413,0.0426,0.044,0.0455,0.047,0.0485,0.0502],[0.0317,0.0326,0.0336,0.0346,0.0356,0.0366,0.0377,0.0389,0.04,0.0412,0.0426,0.0439,0.0453,0.0468,0.0484,0.05],[0.0317,0.0326,0.0335,0.0345,0.0355,0.0365,0.0376,0.0388,0.04,0.0412,0.0425,0.0438,0.0452,0.0467,0.0482,0.0499],[0.0316,0.0326,0.0334,0.0344,0.0354,0.0364,0.0376,0.0387,0.0399,0.0411,0.0423,0.0436,0.0451,0.0465,0.0481,0.0497],[0.0316,0.0325,0.0334,0.0343,0.0353,0.0364,0.0375,0.0386,0.0398,0.041,0.0422,0.0436,0.0449,0.0464,0.0479,0.0496],[0.0316,0.0324,0.0334,0.0343,0.0353,0.0364,0.0374,0.0385,0.0396,0.0409,0.0421,0.0435,0.0448,0.0463,0.0479,0.0494],[0.0315,0.0323,0.0333,0.0343,0.0353,0.0363,0.0373,0.0385,0.0395,0.0407,0.042,0.0434,0.0447,0.0461,0.0477,0.0493],[0.0314,0.0323,0.0332,0.0342,0.0352,0.0362,0.0372,0.0384,0.0395,0.0406,0.042,0.0432,0.0446,0.0461,0.0476,0.0491],[0.0313,0.0323,0.0331,0.0341,0.0351,0.0361,0.0371,0.0383,0.0394,0.0406,0.0419,0.0431,0.0445,0.046,0.0474,0.049],[0.0313,0.0322,0.0331,0.034,0.035,0.036,0.0371,0.0382,0.0393,0.0405,0.0417,0.043,0.0444,0.0458,0.0473,0.0489],[0.0313,0.0321,0.0331,0.034,0.0349,0.036,0.037,0.0381,0.0392,0.0404,0.0416,0.0429,0.0443,0.0457,0.0472,0.0488],[0.0312,0.0321,0.033,0.034,0.0349,0.0359,0.0369,0.038,0.0391,0.0403,0.0415,0.0429,0.0441,0.0456,0.047,0.0486],[0.0312,0.032,0.0329,0.0339,0.0348,0.0358,0.0368,0.038,0.039,0.0402,0.0414,0.0427,0.044,0.0454,0.0469,0.0485],[0.0311,0.032,0.0329,0.0338,0.0348,0.0357,0.0367,0.0379,0.039,0.0401,0.0414,0.0426,0.044,0.0453,0.0468,0.0483],[0.031,0.032,0.0328,0.0337,0.0347,0.0357,0.0367,0.0378,0.0389,0.0401,0.0413,0.0425,0.0439,0.0453,0.0467,0.0482],[0.031,0.0319,0.0328,0.0337,0.0346,0.0356,0.0367,0.0377,0.0388,0.04,0.0412,0.0424,0.0438,0.0451,0.0466,0.048],[0.031,0.0318,0.0327,0.0336,0.0345,0.0356,0.0366,0.0376,0.0387,0.0399,0.0411,0.0423,0.0436,0.045,0.0464,0.0479],[0.0309,0.0317,0.0327,0.0336,0.0345,0.0355,0.0365,0.0375,0.0386,0.0398,0.041,0.0422,0.0435,0.0449,0.0463,0.0478],[0.0309,0.0317,0.0326,0.0335,0.0345,0.0354,0.0364,0.0375,0.0385,0.0397,0.0409,0.0422,0.0434,0.0448,0.0462,0.0477],[0.0308,0.0317,0.0325,0.0334,0.0344,0.0353,0.0363,0.0374,0.0385,0.0396,0.0408,0.042,0.0433,0.0446,0.046,0.0476],[0.0307,0.0316,0.0325,0.0334,0.0343,0.0353,0.0363,0.0373,0.0384,0.0395,0.0407,0.0419,0.0432,0.0445,0.0459,0.0475],[0.0307,0.0316,0.0325,0.0333,0.0342,0.0352,0.0363,0.0372,0.0383,0.0395,0.0406,0.0418,0.0431,0.0444,0.0458,0.0473],[0.0307,0.0315,0.0324,0.0333,0.0342,0.0352,0.0362,0.0371,0.0383,0.0394,0.0405,0.0417,0.043,0.0444,0.0458,0.0472],[0.0307,0.0314,0.0323,0.0333,0.0342,0.0351,0.0361,0.0371,0.0382,0.0393,0.0404,0.0416,0.0429,0.0443,0.0456,0.0471],[0.0306,0.0314,0.0323,0.0332,0.0341,0.035,0.036,0.0371,0.0381,0.0392,0.0403,0.0415,0.0428,0.0441,0.0455,0.0469],[0.0305,0.0314,0.0322,0.0331,0.034,0.035,0.0359,0.037,0.038,0.0391,0.0402,0.0415,0.0427,0.044,0.0454,0.0468],[0.0305,0.0314,0.0321,0.033,0.034,0.0349,0.0359,0.0369,0.038,0.039,0.0401,0.0414,0.0426,0.0439,0.0453,0.0467],[0.0305,0.0313,0.0321,0.033,0.0339,0.0348,0.0359,0.0368,0.0379,0.039,0.0401,0.0413,0.0425,0.0438,0.0451,0.0465],[0.0305,0.0312,0.0321,0.0329,0.0338,0.0348,0.0358,0.0367,0.0378,0.0389,0.04,0.0412,0.0424,0.0437,0.045,0.0465],[0.0304,0.0312,0.032,0.0329,0.0338,0.0348,0.0357,0.0366,0.0377,0.0388,0.0399,0.0411,0.0424,0.0436,0.0449,0.0464],[0.0303,0.0311,0.032,0.0329,0.0338,0.0347,0.0356,0.0366,0.0376,0.0387,0.0398,0.041,0.0422,0.0435,0.0448,0.0462],[0.0303,0.0311,0.0319,0.0328,0.0337,0.0346,0.0355,0.0366,0.0375,0.0386,0.0397,0.0409,0.0421,0.0434,0.0448,0.0461]]},"dynaPlusCap":{"ages":[55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70],"from":1954,"to":2010,"rows":[[null,null,null,null,null,null,null,null,null,null,null,null,null,null,0.0552,0.0573],[null,null,null,null,null,null,null,null,null,null,null,null,null,0.053,0.055,0.0571],[null,null,null,null,null,null,null,null,null,null,null,null,0.0509,0.0528,0.0547,0.0568],[null,null,null,null,null,null,null,null,null,null,null,0.049,0.0507,0.0525,0.0545,0.0567],[null,null,null,null,null,null,null,null,null,null,0.0471,0.0488,0.0505,0.0524,0.0543,0.0564],[null,null,null,null,null,null,null,null,null,0.0454,0.0469,0.0486,0.0503,0.0522,0.0542,0.0562],[null,null,null,null,null,null,null,null,0.0437,0.0452,0.0468,0.0484,0.0502,0.052,0.054,0.056],[null,null,null,null,null,null,null,0.0421,0.0436,0.0451,0.0466,0.0483,0.05,0.0518,0.0538,0.0558],[null,null,null,null,null,null,0.0407,0.0421,0.0435,0.045,0.0465,0.0481,0.0499,0.0516,0.0535,0.0555],[null,null,null,null,null,0.0393,0.0406,0.0419,0.0433,0.0448,0.0463,0.048,0.0497,0.0515,0.0533,0.0554],[null,null,null,null,0.038,0.0392,0.0405,0.0418,0.0432,0.0446,0.0462,0.0478,0.0495,0.0513,0.0532,0.0552],[null,null,null,0.0367,0.0379,0.0391,0.0404,0.0417,0.0431,0.0445,0.0461,0.0477,0.0494,0.0511,0.053,0.055],[null,null,0.0356,0.0367,0.0378,0.039,0.0403,0.0416,0.043,0.0444,0.0459,0.0475,0.0492,0.0509,0.0528,0.0548],[null,0.0344,0.0355,0.0366,0.0377,0.0389,0.0401,0.0415,0.0429,0.0443,0.0458,0.0474,0.049,0.0508,0.0526,0.0546],[0.0333,0.0344,0.0354,0.0365,0.0376,0.0388,0.0401,0.0413,0.0427,0.0441,0.0457,0.0472,0.0489,0.0506,0.0524,0.0544],[0.0333,0.0343,0.0353,0.0364,0.0375,0.0387,0.04,0.0412,0.0426,0.044,0.0455,0.047,0.0487,0.0505,0.0522,0.0541],[0.0332,0.0342,0.0352,0.0364,0.0375,0.0387,0.0398,0.0412,0.0425,0.0439,0.0454,0.047,0.0486,0.0503,0.0521,0.054],[0.0331,0.0341,0.0351,0.0363,0.0374,0.0385,0.0397,0.041,0.0424,0.0438,0.0452,0.0468,0.0484,0.0501,0.0519,0.0538],[0.033,0.0341,0.035,0.0361,0.0373,0.0384,0.0397,0.0409,0.0423,0.0436,0.0451,0.0466,0.0483,0.0499,0.0518,0.0536],[0.033,0.034,0.035,0.036,0.0372,0.0383,0.0396,0.0408,0.0421,0.0435,0.045,0.0465,0.0481,0.0498,0.0516,0.0534],[0.0329,0.0339,0.0349,0.036,0.0371,0.0383,0.0395,0.0408,0.042,0.0434,0.0449,0.0463,0.0479,0.0497,0.0514,0.0532],[0.0328,0.0338,0.0348,0.0359,0.037,0.0382,0.0393,0.0406,0.042,0.0433,0.0447,0.0463,0.0479,0.0495,0.0512,0.053],[0.0328,0.0338,0.0348,0.0358,0.0369,0.0381,0.0393,0.0405,0.0418,0.0432,0.0446,0.0461,0.0477,0.0493,0.0511,0.0529],[0.0327,0.0337,0.0347,0.0357,0.0368,0.0379,0.0392,0.0404,0.0417,0.043,0.0444,0.046,0.0475,0.0492,0.0509,0.0528],[0.0327,0.0336,0.0347,0.0357,0.0367,0.0379,0.0391,0.0403,0.0416,0.0429,0.0444,0.0458,0.0474,0.049,0.0507,0.0526],[0.0326,0.0335,0.0346,0.0356,0.0367,0.0378,0.039,0.0402,0.0415,0.0428,0.0442,0.0457,0.0472,0.0488,0.0506,0.0524],[0.0325,0.0335,0.0345,0.0355,0.0366,0.0377,0.0388,0.0401,0.0414,0.0427,0.0441,0.0456,0.0471,0.0487,0.0504,0.0522],[0.0324,0.0334,0.0344,0.0354,0.0365,0.0376,0.0388,0.04,0.0413,0.0426,0.044,0.0455,0.047,0.0486,0.0502,0.052],[0.0324,0.0334,0.0344,0.0353,0.0364,0.0375,0.0387,0.0399,0.0411,0.0425,0.0438,0.0453,0.0468,0.0484,0.05,0.0518],[0.0324,0.0333,0.0343,0.0353,0.0364,0.0375,0.0386,0.0398,0.041,0.0423,0.0438,0.0452,0.0467,0.0483,0.05,0.0516],[0.0323,0.0332,0.0342,0.0352,0.0363,0.0374,0.0385,0.0397,0.041,0.0423,0.0436,0.045,0.0465,0.0481,0.0498,0.0516],[0.0322,0.0332,0.0341,0.0352,0.0362,0.0373,0.0384,0.0396,0.0409,0.0422,0.0435,0.045,0.0464,0.0479,0.0496,0.0514],[0.0322,0.0331,0.0341,0.0351,0.0361,0.0372,0.0384,0.0395,0.0408,0.042,0.0434,0.0448,0.0463,0.0479,0.0495,0.0512],[0.0321,0.033,0.034,0.035,0.036,0.0371,0.0383,0.0394,0.0406,0.0419,0.0432,0.0447,0.0462,0.0477,0.0493,0.051],[0.0321,0.0329,0.034,0.035,0.036,0.0371,0.0382,0.0394,0.0405,0.0418,0.0432,0.0445,0.046,0.0476,0.0491,0.0509],[0.032,0.0329,0.0339,0.0349,0.0359,0.037,0.0381,0.0393,0.0405,0.0417,0.0431,0.0444,0.0459,0.0474,0.049,0.0507],[0.0319,0.0329,0.0338,0.0348,0.0358,0.0369,0.038,0.0392,0.0404,0.0416,0.0429,0.0443,0.0457,0.0473,0.0489,0.0505],[0.0319,0.0328,0.0337,0.0347,0.0357,0.0368,0.0379,0.039,0.0403,0.0415,0.0428,0.0442,0.0456,0.0471,0.0488,0.0504],[0.0319,0.0327,0.0337,0.0346,0.0356,0.0367,0.0378,0.0389,0.0402,0.0414,0.0427,0.0441,0.0455,0.047,0.0486,0.0503],[0.0318,0.0326,0.0336,0.0346,0.0356,0.0367,0.0377,0.0389,0.04,0.0413,0.0426,0.044,0.0454,0.0469,0.0484,0.0501],[0.0317,0.0326,0.0335,0.0345,0.0355,0.0366,0.0376,0.0388,0.04,0.0412,0.0425,0.0438,0.0453,0.0468,0.0483,0.05],[0.0316,0.0326,0.0335,0.0344,0.0355,0.0365,0.0376,0.0387,0.0399,0.0411,0.0424,0.0437,0.0451,0.0466,0.0481,0.0498],[0.0316,0.0325,0.0334,0.0344,0.0354,0.0364,0.0375,0.0386,0.0398,0.041,0.0423,0.0436,0.045,0.0465,0.048,0.0496],[0.0316,0.0324,0.0334,0.0343,0.0353,0.0364,0.0374,0.0385,0.0397,0.0409,0.0422,0.0435,0.0449,0.0463,0.0479,0.0495],[0.0315,0.0324,0.0333,0.0343,0.0353,0.0363,0.0373,0.0385,0.0396,0.0408,0.042,0.0434,0.0447,0.0462,0.0478,0.0493],[0.0314,0.0323,0.0332,0.0342,0.0352,0.0362,0.0372,0.0384,0.0395,0.0407,0.042,0.0433,0.0447,0.0461,0.0476,0.0492],[0.0314,0.0323,0.0332,0.0341,0.0351,0.0361,0.0371,0.0383,0.0395,0.0406,0.0419,0.0432,0.0446,0.046,0.0475,0.049],[0.0313,0.0322,0.0331,0.034,0.035,0.036,0.0371,0.0382,0.0394,0.0406,0.0418,0.043,0.0444,0.0459,0.0473,0.0489],[0.0313,0.0322,0.0331,0.034,0.0349,0.036,0.037,0.0381,0.0393,0.0404,0.0417,0.0429,0.0443,0.0457,0.0472,0.0488],[0.0312,0.0321,0.033,0.034,0.0349,0.0359,0.037,0.038,0.0391,0.0403,0.0415,0.0429,0.0442,0.0456,0.047,0.0486],[0.0312,0.032,0.0329,0.0339,0.0349,0.0358,0.0369,0.038,0.039,0.0402,0.0414,0.0428,0.044,0.0454,0.0469,0.0485],[0.0311,0.032,0.0329,0.0338,0.0348,0.0358,0.0368,0.0379,0.039,0.0401,0.0414,0.0426,0.044,0.0453,0.0469,0.0483],[0.031,0.032,0.0328,0.0337,0.0347,0.0357,0.0367,0.0378,0.0389,0.0401,0.0413,0.0425,0.0439,0.0453,0.0467,0.0482],[0.031,0.0319,0.0328,0.0337,0.0346,0.0356,0.0367,0.0377,0.0388,0.04,0.0412,0.0424,0.0438,0.0451,0.0466,0.048],[0.031,0.0318,0.0327,0.0336,0.0345,0.0356,0.0366,0.0376,0.0387,0.0399,0.0411,0.0423,0.0436,0.045,0.0464,0.0479],[0.0309,0.0317,0.0327,0.0336,0.0345,0.0355,0.0365,0.0375,0.0386,0.0398,0.041,0.0422,0.0435,0.0449,0.0463,0.0478],[0.0309,0.0317,0.0326,0.0335,0.0345,0.0354,0.0364,0.0375,0.0385,0.0397,0.0409,0.0422,0.0434,0.0448,0.0462,0.0477]]}};
+
+const SPARPLAENE = { basis:{label:'Basis',rate:9.6}, standard:{label:'Standard',rate:11.6}, top:{label:'Top',rate:13.6} };
+const MODELLE = { norm:'Norm', dyna:'Dyna', kombi:'Kombi' };
+
+/* Feature-Flags: neue Features hier registrieren, Schalter erscheinen in den Demo-Werkzeugen */
+const FLAGS = {
+  monatlich:{ label:'Beträge zusätzlich pro Monat anzeigen', default:false },
+  ehegatten:{ label:'Ehegattenrente in der Ausgabe anzeigen', default:false },
+  tarifinfo:{ label:'Umwandlungssatz und Barwertfaktoren in der Ausgabe anzeigen', default:false }
+};
+
+function defaultState(cfg){
+  return {
+    expert:false,                       // Ansicht: false = Standard, true = Experte
+    alterJahre:65, alterMonate:0, ueZ:false, projZins:2.0,
+    einkauf:0, bg:cfg.beschaeftigungsgrad, lohn:cfg.jahreslohn, lohnErhoehung:0,
+    wefRueck:0, wefVorbezug:0, sparplan:'top',
+    modell:'norm', plus:false, kombiAuszahlungPct:0,
+    kapitalPct:0, kapitalChf:0, kapitalRef:'chf',
+    ahv:false, steuern:false, weiteres:false, weiteresBetrag:0,
+    bgStufenAktiv:false, bgStufen:[],   // [{am, bg, tp:Teilpensionierung, kapitalPct, uez}]
+    flags:Object.fromEntries(Object.entries(FLAGS).map(([k,v]) => [k, v.default]))
+  };
+}
+
+const LS_KEY = 'bvk-sim-demo-v5';
+function load(){
+  try{ const raw = localStorage.getItem(LS_KEY); if(raw){ const p = JSON.parse(raw);
+    const cfg = {...DEFAULT_CONFIG, ...(p.config||{})};
+    const st = {...defaultState(cfg), ...(p.state||{})};
+    st.flags = {...defaultState(cfg).flags, ...(p.state?.flags||{})};
+    return {cfg, st}; } }catch(e){}
+  return {cfg:{...DEFAULT_CONFIG}, st:defaultState(DEFAULT_CONFIG)};
+}
+function save(){ try{ localStorage.setItem(LS_KEY, JSON.stringify({config, state})); }catch(e){} }
+let {cfg:config, st:state} = load();
+
+/* =====================================================================
+   2) HILFSFUNKTIONEN
+   ===================================================================== */
+const fmt = (n, d=0) => {
+  if(n == null || !isFinite(n)) return '–';
+  const neg = n < 0; const [i, f] = Math.abs(n).toFixed(d).split('.');
+  return (neg ? '−' : '') + i.replace(/\B(?=(\d{3})+(?!\d))/g, "'") + (f ? '.' + f : '');
+};
+const parseNum = s => { const v = parseFloat(String(s).replace(/['’\s]/g,'').replace(',', '.')); return isNaN(v) ? 0 : v; };
+const parseDate = s => { const [y,m,d] = s.split('-').map(Number); return {y,m,d}; };
+const lastDayOfMonth = (y,m) => new Date(y, m, 0).getDate();
+const fmtDate = (y,m,d) => `${String(d).padStart(2,'0')}.${String(m).padStart(2,'0')}.${y}`;
+const cmpYM = (a,b) => (a.y - b.y) * 12 + (a.m - b.m);
+
+/* =====================================================================
+   3) BERECHNUNG (Platzhalter) – wird durch die echte Logik/API ersetzt
+   ===================================================================== */
+function pensionDate(st){
+  const b = parseDate(config.geburtsdatum);
+  let y = b.y + st.alterJahre, m = b.m + st.alterMonate;
+  while(m > 12){ m -= 12; y++; }
+  return {y, m, d:lastDayOfMonth(y,m)};
+}
+/* ---------- Beschäftigungsgrad-Stufen ---------- */
+const MAX_STUFEN = 3;
+function alterMonateAm(y, m){ const b = parseDate(config.geburtsdatum); return (y - b.y) * 12 + (m - b.m); }
+function alterHeuteMonate(){ const sd = parseDate(config.stichtag); return alterMonateAm(sd.y, sd.m); }
+/* Stufe «ab Alter a» gilt ab dem 1. des Monats nach dem Monat, in dem das Alter erreicht wird */
+function stufeStartdatum(am){ const b = parseDate(config.geburtsdatum); let y = b.y, m = b.m + am + 1; y += Math.floor((m - 1) / 12); m = (m - 1) % 12 + 1; return fmtDate(y, m, 1); }
+function bgImMonat(st, am){
+  let bg = st.bg;
+  if(st.bgStufenAktiv) st.bgStufen.forEach(x => { if(am > x.am) bg = x.bg; });
+  return bg;
+}
+function validate(st, guthabenHeute){
+  const e = {}, add = (k, msg) => (e[k] ||= []).push(msg);
+  const monthsLeft = cmpYM(pensionDate(st), parseDate(config.stichtag));
+  if(st.einkauf > config.maxEinkauf) add('einkauf', `Ihr maximal möglicher Einkauf beträgt ${fmt(config.maxEinkauf)} CHF`);
+  if(st.wefRueck > 0){
+    if(st.wefRueck < 10000) add('wefRueck', "Eine Rückzahlung darf 10'000 CHF nicht unterschreiten");
+    if(st.wefRueck > config.offenerVorbezug) add('wefRueck', `Die Rückzahlung kann nicht grösser sein als Ihr offener Vorbezug von ${fmt(config.offenerVorbezug)} CHF`);
+  }
+  if(st.wefVorbezug > 0){
+    if(st.wefVorbezug > guthabenHeute) add('wefVorbezug', `Ihr Bezug kann nicht grösser sein als Ihr Sparguthaben von ${fmt(guthabenHeute)} CHF`);
+    if(st.wefVorbezug < 20000) add('wefVorbezug', "Ein Vorbezug darf 20'000 CHF nicht unterschreiten");
+    if(monthsLeft < 36) add('wefVorbezug', 'Ein Vorbezug ist bis 3 Jahre vor der Pensionierung möglich');
+  }
+  if(st.lohn <= 0) add('lohn', 'Bitte geben Sie einen Jahreslohn ein');
+  if(st.bgStufenAktiv){
+    const heute = alterHeuteMonate(), pens = st.alterJahre * 12 + st.alterMonate;
+    st.bgStufen.forEach((x, i) => {
+      const vor = i ? st.bgStufen[i - 1] : null;
+      if(x.am < heute) add('stufeAlter' + i, 'Die Anpassung muss in der Zukunft liegen');
+      if(x.am >= pens) add('stufeAlter' + i, 'Die Anpassung muss vor der Pensionierung liegen');
+      if(vor && x.am <= vor.am) add('stufeAlter' + i, 'Bitte einen späteren Zeitpunkt als bei der vorherigen Stufe wählen');
+      if((vor ? vor.bg : st.bg) === x.bg) add('stufeBg' + i, 'Der Beschäftigungsgrad entspricht der vorherigen Stufe');
+      if(x.tp){
+        const tpNr = st.bgStufen.slice(0, i + 1).filter(z => z.tp).length;
+        if(x.am < 60 * 12) add('stufeTp' + i, 'Eine Teilpensionierung ist ab Alter 60 möglich');
+        if(x.bg >= (vor ? vor.bg : st.bg)) add('stufeTp' + i, 'Eine Teilpensionierung setzt eine Reduktion des Beschäftigungsgrads voraus');
+        if(x.bg === 0) add('stufeTp' + i, 'Für die vollständige Pensionierung passen Sie bitte das Pensionsalter an');
+        if(tpNr > 2) add('stufeTp' + i, 'Die Pensionierung kann höchstens in drei Schritten erfolgen (inkl. vollständiger Pensionierung)');
+      }
+    });
+  }
+  return e;
+}
+/* ---------- Tariflogik gemäss Excel-Pensionsrechner ---------- */
+const round05   = v => Math.round(v * 20) / 20;          // Excel ROUND(x*2,1)/2
+const roundup05 = v => Math.ceil(v * 20 - 1e-9) / 20;    // Excel ROUNDUP(x*2,1)/2
+function tarif(name, jahrgang, alter){
+  const t = TABLES[name], i = t.ages.indexOf(alter);
+  if(i < 0 || jahrgang < t.from || jahrgang > t.to) return null;
+  const v = t.rows[jahrgang - t.from][i];
+  return v == null ? null : v;
+}
+/* Wert zwischen zwei ganzen Altern monatsgenau interpolieren (Rechner!B34:E40) */
+function tarifInterpoliert(name, jahrgang, jahre, monate){
+  const a = tarif(name, jahrgang, jahre);
+  if(a == null) return null;
+  if(!monate) return a;
+  const b = tarif(name, jahrgang, jahre + 1);
+  if(b == null) return null;
+  return a + (b - a) / 12 * monate;
+}
+/* Dauer Überbrückungszuschuss in Monaten (Üz-Berechnung!B9/D9, inkl. AHV-21-Übergang Frauen) */
+function ahvAlterMonate(jahrgang, geschlecht){
+  if(geschlecht === 'weiblich'){
+    if(jahrgang < 1961) return 64 * 12;
+    if(jahrgang === 1961) return 771;
+    if(jahrgang === 1962) return 774;
+    if(jahrgang === 1963) return 777;
+  }
+  return 65 * 12;
+}
+function uezMonate(jahrgang, alterMonate, geschlecht){
+  return Math.max(0, ahvAlterMonate(jahrgang, geschlecht) - alterMonate);
+}
+/* Monatlicher Rentenverlauf «Dyna» (Blatt Dyna, Matrix V28:AP48):
+   Monatsrente sinkt jedes Jahr um die Reduktion, innerhalb des Jahres linear Monat für Monat.
+   Ab 75 gilt die Monatsrente aus dem Cap-Umwandlungssatz. Abgeglichen mit Berechnungsvarianten_Dyna_myBVK_PKS.xlsx. */
+function dynaMonatsverlauf(startJahresrente, rente75, alterMonateStart, reduktion){
+  const monate = Math.max(0, 75 * 12 - alterMonateStart);
+  const verlauf = [];
+  let m = round05(startJahresrente / 12);
+  const m75 = roundup05(rente75 / 12);
+  for(let jahr = 0; jahr * 12 < monate; jahr++){
+    const naechste = round05(m * (1 - reduktion));   // Zielwert Folgejahr (auch im letzten Jahr, wie PK/S-Tabelle)
+    const schritt = round05((m - naechste) / 12);
+    for(let k = 0; k < 12 && jahr * 12 + k < monate; k++){
+      const am = alterMonateStart + jahr * 12 + k;
+      verlauf.push({alter:`${Math.floor(am / 12)}/${am % 12}`, rente:+(m - k * schritt).toFixed(2)});
+    }
+    m = naechste;
+  }
+  verlauf.push({alter:'75/0', rente:m75, abHier:true});
+  return verlauf;
+}
+
+/* Ausgewiesene «Dyna»-Jahresrenten je Rentenjahr ab dem (ggf. unterjährigen) Rentenbeginn:
+   «Mit 64/3», «mit 65/3», … bis zum Rentenjahr, in dem 75 erreicht wird (Wiki-Update 19.09.2023).
+   - Summe Monatsrenten (PK/S): Summe der 12 effektiven Monatsrenten des Rentenjahres
+   - Jahresbasis (bisher):      Startrente × (1 − Reduktion)^n
+   - Jahresbasis mit Korrektur: wie bisher, abzüglich Korrekturfaktor (Beta-Lösung) */
+function dynaJahresrenten(start, rente75, verlauf, alterMonateStart){
+  const monate = verlauf.filter(p => !p.abHier).map(p => p.rente);
+  const m75 = verlauf[verlauf.length - 1].rente;
+  const jahre = Math.ceil(monate.length / 12) || 1, red = config.dynaReduktion / 100;
+  const out = [];
+  for(let n = 0; n < jahre; n++){
+    const am = alterMonateStart + n * 12;
+    let betrag;
+    if(config.dynaMethode.startsWith('Summe')){
+      betrag = 0;
+      for(let k = 0; k < 12; k++){ const i = n * 12 + k; betrag += i < monate.length ? monate[i] : m75; }
+      betrag = Math.round(betrag);
+    } else {
+      betrag = Math.round(start * (1 - red) ** n);
+      if(config.dynaMethode.includes('Korrektur')) betrag = Math.round(betrag * (1 - config.dynaKorrektur / 100));
+    }
+    const jahresbasis = Math.round(start * (1 - red) ** n);
+    out.push({alter: am % 12 ? `${Math.floor(am / 12)}/${am % 12}` : `${am / 12}`, betrag, jahresbasis,
+      faktorPct:+((1 - betrag / jahresbasis) * 100).toFixed(3)});
+  }
+  return out;
+}
+
+/* ---------- Einkommenssteuer: Dummy-Tarif (ersetzt Taxware-API) ----------
+   Progressive Grenzsteuersätze, damit die Steuerlast mit sinkender Rente sichtbar sinkt.
+   Im Portal: ein Taxware-Call pro Zeile der Einkommenstabelle (Einkommen, Wohnort, Kanton). */
+const STEUER_STUFEN = [[20000,0.00],[40000,0.08],[60000,0.13],[80000,0.17],[120000,0.21],[Infinity,0.25]];
+function steuerDummy(einkommen){
+  let rest = einkommen, unten = 0, steuer = 0;
+  for(const [oben, satz] of STEUER_STUFEN){
+    const teil = Math.min(rest, oben - unten); if(teil <= 0) break;
+    steuer += teil * satz; rest -= teil; unten = oben;
+  }
+  return Math.round(steuer * config.steuerSkalierung / 100);
+}
+const altLabel = am => am % 12 ? `${Math.floor(am / 12)}/${am % 12}` : `${am / 12}`;
+
+/* Einkommen pro Rentenjahr (Rentenjahr = 12 Monate ab Rentenbeginn), inkl. Wechsel Üz → AHV.
+   Jahre mit identischem Einkommen werden zusammengefasst, damit Norm/Kombi kompakt bleiben. */
+function einkommenVerlauf(st, r){
+  const F = r.alterMonate, a0 = r.teile[0].am;                       // ab erstem Pensionierungsschritt
+  const monat = k => {
+    const x = {lohn:k <= F ? (r.lohnMonat[k] || 0) : 0, bvk:0, uez:0, ahv:0, weiteres:r.weiteres / 12};
+    r.teile.forEach(p => { if(k > p.am){ x.bvk += p.monthly(k - p.am - 1); if(p.uezJahr && k <= r.ahvAm) x.uez += p.uezJahr / 12; } });
+    if(st.ahv && k > r.ahvAm) x.ahv = r.ahv / 12;
+    return x;
+  };
+  const rows = [];
+  const push = am => {
+    const s = {lohn:0, bvk:0, uez:0, ahv:0, weiteres:0};
+    for(let k = am + 1; k <= am + 12; k++){ const x = monat(k); for(const key in s) s[key] += x[key]; }
+    for(const key in s) s[key] = Math.round(s[key]);
+    const brutto = s.lohn + s.bvk + s.uez + s.ahv + s.weiteres, steuer = steuerDummy(brutto);
+    rows.push({von:am, ...s, brutto, steuer, netto:brutto - steuer});
+  };
+  for(let am = a0; am < 900; am += 12) push(am);
+  push(Math.max(900, a0));
+  const grp = [];
+  rows.forEach(x => { const last = grp[grp.length - 1]; if(last && last.brutto === x.brutto) last.bis = x.von; else grp.push({...x, bis:x.von}); });
+  grp.forEach((g, i) => {
+    const letzte = i === grp.length - 1;
+    g.label = letzte ? (g.von >= 900 ? 'ab 75' : `ab ${altLabel(g.von)}`)
+      : g.bis > g.von ? `${altLabel(g.von)} – ${altLabel(g.bis + 11)}` : `mit ${altLabel(g.von)}`;
+  });
+  return grp;
+}
+
+/* ---------- Rente für einen Teil des Sparguthabens ----------
+   Wird für jeden Pensionierungsschritt aufgerufen (Teilpensionierungen und vollständige Pensionierung).
+   Das Rentenmodell ist für alle Schritte identisch. */
+function rentePart(st, jahrgang, G, am, kapitalPct, kapitalChfFix, uezJahr){
+  const J = Math.floor(am / 12), M = am % 12;
+  const plus = st.plus, ehegattenAnteil = plus ? 1/3 : 2/3;
+  const tabNorm = plus ? 'normPlus' : 'norm', tabDyna = plus ? 'dynaPlus' : 'dyna';
+  const bwUez = uezJahr ? Math.round((tarifInterpoliert('bwUez', jahrgang, J, M) ?? 0) * 1000) / 1000 : 0;
+  const uezKosten = uezJahr * bwUez;                                  // Finanzierung Üz, belastet diesen Teil
+  const kapitalChf = kapitalChfFix != null ? Math.min(kapitalChfFix, G) : G * Math.min(100, kapitalPct) / 100;
+  const p = { am, G, uezJahr, uezKosten, bwUez, kapitalChf, kapitalPct:G ? kapitalChf / G * 100 : 0,
+    gRente:Math.max(0, G - kapitalChf - uezKosten), gNachUeZ:Math.max(0, G - uezKosten),
+    uws:null, uwsCap:null, bwKombi:null, renteBasis:null, renteStart:0, rente75:null, renteBis75:null,
+    kombiKapital:0, barwert:0, ehegatten:0, dynaVerlauf:null, dynaJahre:null };
+  if(st.modell === 'norm'){
+    p.uws = tarifInterpoliert(tabNorm, jahrgang, J, M);
+    p.renteStart = Math.round(p.gRente * (p.uws ?? 0));
+    p.ehegatten = Math.round(p.renteStart * ehegattenAnteil);
+    p.monthly = () => p.renteStart / 12;
+  }
+  if(st.modell === 'dyna'){
+    p.uws = tarifInterpoliert(tabDyna, jahrgang, J, M);
+    p.renteBasis = Math.round(p.gRente * (p.uws ?? 0));
+    p.uwsCap = tarifInterpoliert(plus ? 'dynaPlusCap' : 'dynaCap', jahrgang, J, M);
+    p.rente75 = Math.round(p.gRente * (p.uwsCap ?? 0));                // Rente ab 75 über Cap-Umwandlungssatz
+    p.ehegatten = Math.round(p.rente75 * ehegattenAnteil);
+    p.dynaVerlauf = dynaMonatsverlauf(p.renteBasis, p.rente75, am, config.dynaReduktion / 100);
+    p.dynaJahre = dynaJahresrenten(p.renteBasis, p.rente75, p.dynaVerlauf, am);
+    p.renteStart = p.dynaJahre[0].betrag;
+    // Monatsrenten so skaliert, dass die Jahressummen der gewählten Ausweis-Methode entsprechen
+    const mon = p.dynaVerlauf.filter(x => !x.abHier).map(x => x.rente), m75 = p.dynaVerlauf[p.dynaVerlauf.length - 1].rente;
+    const scale = p.dynaJahre.map((j, n) => { let sum = 0; for(let k = 0; k < 12; k++){ const i = n * 12 + k; sum += i < mon.length ? mon[i] : m75; } return sum ? j.betrag / sum : 1; });
+    p.monthly = j => j < mon.length ? mon[j] * scale[Math.floor(j / 12)] : p.rente75 / 12;
+  }
+  if(st.modell === 'kombi'){
+    p.uws = tarifInterpoliert(tabNorm, jahrgang, J, M);
+    p.bwKombi = tarifInterpoliert('bwKombi', jahrgang, J, M);
+    p.rente75 = Math.round(p.gRente * (p.uws ?? 0));                  // Kombi!B8
+    p.barwert = Math.round(p.gRente * (p.uws ?? 0) * (p.bwKombi ?? 0)); // Kombi!B10
+    p.kombiKapital = Math.round(p.barwert * st.kombiAuszahlungPct / 100);
+    // Nicht ausbezahlter Barwert wird bis 75 verrentet: Restbarwert ÷ Barwertfaktor (0 % Auszahlung = Norm-Rente)
+    p.renteBis75 = p.bwKombi ? Math.round((p.barwert - p.kombiKapital) / p.bwKombi) : 0;
+    p.renteStart = p.renteBis75;
+    p.ehegatten = Math.round((p.rente75 + p.renteBis75) * ehegattenAnteil);
+    p.monthly = j => (j < 900 - am ? p.renteBis75 : p.rente75) / 12;
+  }
+  return p;
+}
+/* Rente eines Teils für das Rentenjahr ab Alter k0 (Monate k0+1 … k0+12) */
+function renteImJahr(p, k0){
+  let sum = 0;
+  for(let k = k0 + 1; k <= k0 + 12; k++) if(k > p.am) sum += p.monthly(k - p.am - 1);
+  return sum;
+}
+
+function calculate(st){
+  const errors = validate(st, config.sparguthaben), ok = k => !errors[k];
+  const sd = parseDate(config.stichtag), pd = pensionDate(st), fz = parseDate(config.festZinsBis);
+  const jahrgang = parseDate(config.geburtsdatum).y;
+  const alterMonate = st.alterJahre * 12 + st.alterMonate;
+  const alter = alterMonate / 12;
+  const ahvAm = ahvAlterMonate(jahrgang, config.geschlecht);
+  const uezBasis = config.uezAusgeschlossen ? 0 : (config.partnerzuschlag ? config.uezPartner : config.uezNormal);
+
+  /* ---- Hochrechnung Sparguthaben (vereinfacht) inkl. Teilpensionierungen ---- */
+  let g = config.sparguthaben;
+  if(ok('einkauf')) g += st.einkauf;
+  if(ok('wefRueck')) g += st.wefRueck;
+  if(ok('wefVorbezug')) g -= st.wefVorbezug;
+  const rate = (SPARPLAENE[st.sparplan].rate + config.agBeitrag) / 100;
+  const stufenOk = !Object.keys(errors).some(k => k.startsWith('stufe'));
+  const stGueltig = stufenOk ? st : {...st, bgStufenAktiv:false};
+  const tpStufen = stGueltig.bgStufenAktiv ? stGueltig.bgStufen.map((x, i) => ({...x, idx:i})).filter(x => x.tp) : [];
+  const bgVerlauf = [], verlauf = [], teile = [], lohnMonat = {};
+  let lohn = st.lohn, y = sd.y, m = sd.m + 1; if(m > 12){ m = 1; y++; }
+  while(cmpYM({y,m}, pd) <= 0){
+    if(m === 1 && y !== sd.y) lohn *= 1 + st.lohnErhoehung / 100;
+    const am = alterMonateAm(y, m);
+    const bgM = bgImMonat(stGueltig, am) / 100;
+    if(!bgVerlauf.length || bgVerlauf[bgVerlauf.length - 1].bg !== bgM * 100) bgVerlauf.push({ab:fmtDate(y, m, 1), alter:am - 1, bg:bgM * 100});
+    // Teilpensionierung: im ersten Monat mit reduziertem BG wird der Anteil des Sparguthabens verrentet,
+    // im Verhältnis der Reduktion des versicherten Lohnes
+    tpStufen.forEach(x => {
+      if(am !== x.am + 1) return;
+      const bgVor = bgImMonat(stGueltig, x.am) / 100;
+      const vlVor = Math.max(0, (lohn - config.koordinationsabzug) * bgVor), vlNach = Math.max(0, (lohn - config.koordinationsabzug) * bgM);
+      const anteil = vlVor > 0 ? (vlVor - vlNach) / vlVor : 0;
+      const Gp = g * anteil; g -= Gp;
+      const uezJ = x.uez && x.am < ahvAm ? uezBasis * (bgVor - bgM) : 0;   // Üz in Höhe der BG-Reduktion
+      const p = rentePart(st, jahrgang, Gp, x.am, x.kapitalPct || 0, null, uezJ);
+      Object.assign(p, {schritt:teile.length + 1, stufeIdx:x.idx, anteil, bgVor:bgVor * 100, bgNach:bgM * 100, datum:fmtDate(y, m, 1)});
+      if(p.uws == null) (errors['stufeTp' + x.idx] ||= []).push(`Für Jahrgang ${jahrgang} ist mit diesem Alter kein Umwandlungssatz hinterlegt`);
+      teile.push(p);
+    });
+    lohnMonat[am] = lohn * bgM / 12;
+    const beitrag = Math.max(0, (lohn - config.koordinationsabzug) * bgM) * rate / 12;
+    const r = cmpYM({y,m}, fz) <= 0 ? config.festZins : st.projZins;
+    g = g * (1 + r / 100 / 12) + beitrag;
+    if(m === 12 || cmpYM({y,m}, pd) === 0) verlauf.push({jahr:y, guthaben:Math.round(g)});
+    m++; if(m > 12){ m = 1; y++; }
+  }
+  const guthabenPension = g;
+
+  /* ---- Vollständige Pensionierung mit dem Restguthaben ---- */
+  const bg = bgImMonat(stGueltig, alterMonate) / 100;                // BG bei Pensionierung
+  const uezFinal = st.ueZ && alterMonate < ahvAm ? uezBasis * bg : 0;
+  const fin = rentePart(st, jahrgang, g, alterMonate, st.kapitalPct, st.kapitalRef === 'chf' ? st.kapitalChf : null, uezFinal);
+  Object.assign(fin, {schritt:teile.length + 1, final:true, anteil:1, bgVor:bg * 100, bgNach:0, datum:fmtDate(pd.y, pd.m, pd.d)});
+  teile.push(fin);
+  if(fin.uws == null) (errors.alterJahre ||= []).push(`Für Jahrgang ${jahrgang} ist mit diesem Alter kein Umwandlungssatz hinterlegt`);
+
+  /* ---- Aggregation über alle Schritte (Sicht ab vollständiger Pensionierung) ---- */
+  const F = alterMonate, sum = f => teile.reduce((a, p) => a + (f(p) || 0), 0);
+  let dynaJahre = null, dynaVerlauf = null;
+  if(st.modell === 'dyna'){
+    dynaJahre = [];
+    for(let k0 = F; k0 < 900; k0 += 12) dynaJahre.push({alter:altLabel(k0), betrag:Math.round(sum(p => renteImJahr(p, k0)))});
+    if(!dynaJahre.length) dynaJahre.push({alter:altLabel(F), betrag:Math.round(sum(p => p.rente75))});
+    dynaVerlauf = [];
+    for(let k = F + 1; k <= 900; k++) dynaVerlauf.push({alter:altLabel(k - 1).includes('/') ? altLabel(k - 1) : altLabel(k - 1) + '/0', rente:+sum(p => k > p.am ? p.monthly(k - p.am - 1) : 0).toFixed(2)});
+    dynaVerlauf.push({alter:'75/0', rente:+sum(p => p.dynaVerlauf[p.dynaVerlauf.length - 1].rente).toFixed(2), abHier:true});
+  }
+  const renteStart = st.modell === 'dyna' ? dynaJahre[0].betrag : Math.round(sum(p => p.renteStart));
+  const ueZ = F < ahvAm ? sum(p => p.uezJahr) : 0;
+  const ahv = st.ahv ? config.ahvRente : 0, ahvAbStart = F >= ahvAm;
+  const weiteres = st.weiteres ? st.weiteresBetrag : 0;
+  const totalJahr = renteStart + ueZ + (ahvAbStart ? ahv : 0) + weiteres;
+  const kapitalTotal = sum(p => p.kapitalChf) + sum(p => p.kombiKapital);
+  const res = {
+    errors, jahrgang, alter, alterMonate, ahvAm, bgVerlauf, bgPension:bg * 100, pensionsdatum:pd, guthabenPension, verlauf, lohnMonat,
+    teile, tp:teile.filter(p => !p.final),
+    gNachUeZ:fin.gNachUeZ, gRente:fin.gRente, uws:fin.uws, uwsCap:fin.uwsCap, bwKombi:fin.bwKombi, bwUez:fin.bwUez,
+    renteBasis:teile.length === 1 ? fin.renteBasis : null,
+    barwert:sum(p => p.barwert), renteStart,
+    rente75:st.modell === 'norm' ? null : Math.round(sum(p => p.rente75)),
+    renteBis75:st.modell === 'kombi' ? Math.round(sum(p => p.renteBis75)) : null,
+    kombiKapital:sum(p => p.kombiKapital), kapitalChf:fin.kapitalChf, kapitalPct:fin.kapitalPct,
+    ehegattenrente:sum(p => p.ehegatten), dynaVerlauf, dynaJahre,
+    ueZ, ueZTotal:Math.round(sum(p => p.uezJahr / 12 * Math.max(0, ahvAm - p.am))), uezMon:Math.max(0, ahvAm - F),
+    ueZKosten:sum(p => p.uezKosten), ahv, ahvAbStart, weiteres, totalJahr, kapitalTotal,
+    steuerEink: st.steuern ? steuerDummy(totalJahr) : 0,
+    steuerKap: st.steuern ? kapitalTotal * config.steuerKapital / 100 : 0
+  };
+  res.einkommen = einkommenVerlauf(st, res);
+  return res;
+}
+
+/* =====================================================================
+   4) KOMPONENTEN (Klassennamen wie in der Produktion)
+   ===================================================================== */
+const form = document.getElementById('simForm');
+const numerics = [], bindings = [];
+
+function el(tag, attrs={}, ...children){
+  const n = document.createElement(tag);
+  for(const [k,v] of Object.entries(attrs)){
+    if(v == null) continue;
+    if(k === 'class') n.className = v; else if(k === 'html') n.innerHTML = v;
+    else if(k.startsWith('on')) n.addEventListener(k.slice(2), v); else n.setAttribute(k, v);
+  }
+  children.flat().forEach(c => c != null && n.append(c.nodeType ? c : document.createTextNode(c)));
+  return n;
+}
+let tipId = 0;
+function info(text, {filled=false}={}){
+  const id = 'tooltip-vue-' + (++tipId);
+  return el('span', {class:'info-wrapper'},
+    el('button', {type:'button', class:'info-circle' + (filled ? ' filled' : ''), 'aria-label':'Info', 'aria-describedby':id}, 'i'),
+    el('span', {class:'tooltip', role:'tooltip', id}, text));
+}
+function collapsible(headCls, titleEl, bodyCls, open){
+  const body = el('div', {class:bodyCls}); body.hidden = !open;
+  const chev = el('span', {class:'chev', 'aria-hidden':'true'});
+  const head = el('button', {type:'button', class:headCls + (open ? '' : ' collapsed'), 'aria-expanded':String(open),
+    onclick:() => { body.hidden = !body.hidden; head.classList.toggle('collapsed', body.hidden); head.setAttribute('aria-expanded', String(!body.hidden)); }},
+    titleEl, chev);
+  return {head, body};
+}
+function section(title, open=false){
+  const titleEl = el('h3', {class:'s-is-title'}, title);
+  const {head, body} = collapsible('s-is-header', titleEl, 's-is-body', open);
+  form.append(el('div', {class:'sim-input-section'}, head, body));
+  body.titleEl = titleEl;
+  return body;
+}
+/* ---------- Ansicht Standard / Experte ----------
+   expertOnly(node): Element nur im Expertenmodus anzeigen.
+   badge(node): Kennzeichnung «Experte» an Titel oder Label anhängen. */
+function expertOnly(node){ node.classList.add('expert-only'); bindings.push(() => { node.hidden = !state.expert; }); return node; }
+function badge(node){ if(node) node.append(el('span', {class:'expert-badge'}, 'Experte')); return node; }
+/* Einstellungen, die nur im Expertenmodus wirken. Im Standardmodus bleiben sie gespeichert, werden aber nicht gerechnet. */
+function effectiveState(st){
+  if(st.expert) return st;
+  return {...st, ueZ:false, bg:config.beschaeftigungsgrad, bgStufenAktiv:false, wefRueck:0, wefVorbezug:0, steuern:false, weiteres:false};
+}
+function gespeicherteExperteneinstellungen(st){
+  const list = [];
+  if(st.ueZ) list.push('Überbrückungszuschuss');
+  if(st.bg !== config.beschaeftigungsgrad) list.push('Beschäftigungsgrad');
+  if(st.bgStufenAktiv && st.bgStufen.length) list.push(st.bgStufen.some(x => x.tp) ? 'Teilpensionierung' : 'Pensumsanpassungen');
+  if(st.wefRueck > 0 || st.wefVorbezug > 0) list.push('Kapital für Eigenheim');
+  if(st.steuern) list.push('Steuerberechnung');
+  if(st.weiteres && st.weiteresBetrag > 0) list.push('Weiteres Einkommen');
+  return list;
+}
+/* Zugeklappte Bereiche um ein Element öffnen, damit es nach dem Moduswechsel sichtbar ist */
+function oeffneBereiche(node){
+  for(let n = node; n; n = n.parentElement){
+    if(n.hidden && (n.classList.contains('s-is-body') || n.classList.contains('s-ig-body'))){
+      n.hidden = false;
+      const head = n.previousElementSibling;
+      if(head){ head.classList.remove('collapsed'); head.setAttribute('aria-expanded', 'true'); }
+    }
+  }
+}
+function setMode(expert, fokusId){
+  state.expert = expert; update();
+  if(fokusId){ const t = document.getElementById(fokusId); if(t){ oeffneBereiche(t); t.scrollIntoView({block:'center', behavior:window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'}); t.focus({preventScroll:true}); } }
+}
+function verwerfeExperteneinstellungen(){
+  Object.assign(state, {ueZ:false, bg:config.beschaeftigungsgrad, bgStufenAktiv:false, bgStufen:[], wefRueck:0, wefVorbezug:0, steuern:false, weiteres:false, weiteresBetrag:0});
+  update(); toast('Experteneinstellungen verworfen.');
+}
+function group(parent, title, desc, tip){
+  const t = el('h3', {class:'s-ig-title'}, title, tip ? info(tip) : null);
+  const {head, body} = collapsible('s-ig-header', t, 's-ig-body', true);
+  if(desc) body.append(el('p', {}, desc));
+  parent.append(el('div', {class:'sim-input-comp'}, head, body));
+  return body;
+}
+function plainComp(parent){ const c = el('div', {class:'sim-input-comp'}); parent.append(c); return c; }
+
+function numeric(parent, key, opts){
+  const o = {step:1, min:0, max:Infinity, decimals:0, ...opts};
+  const val = () => o.get ? o.get() : state[key];
+  const setVal = v => { o.set ? o.set(v) : (state[key] = v); };
+  const mn = () => typeof o.min === 'function' ? o.min() : o.min;
+  const mx = () => typeof o.max === 'function' ? o.max() : o.max;
+  const clamp = v => Math.min(mx(), Math.max(mn(), v));
+  const round = v => Math.round(v * 10 ** o.decimals) / 10 ** o.decimals;
+  const input = el('input', {type:'tel', inputmode:'decimal', name:'numeric', 'aria-label':o.label});
+  const dec = el('button', {type:'button', class:'btn-numeric dec', 'aria-label':o.label + ' verringern', onclick:() => { setVal(round(clamp(val() - o.step))); update(); }});
+  const inc = el('button', {type:'button', class:'btn-numeric inc', 'aria-label':o.label + ' erhöhen', onclick:() => { setVal(round(clamp(val() + o.step))); update(); }});
+  input.addEventListener('input', () => { setVal(round(o.parse ? o.parse(input.value) : parseNum(input.value))); update(true); });
+  input.addEventListener('blur', () => { setVal(round(clamp(val()))); update(); });
+  input.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); input.blur(); } });
+  const msgs = el('div');
+  const field = el('div', {class:'form-group'},
+    el('label', {}, o.label, o.tip ? info(o.tip) : null),
+    el('div', {class:'control-group'}, dec, input, inc), msgs,
+    o.hint ? el('small', {class:'form-text'}, typeof o.hint === 'function' ? '' : o.hint) : null);
+  parent.append(field);
+  numerics.push({key, input, dec, inc, field, msgs, val, mn, mx, o, hintEl:field.querySelector('.form-text')});
+}
+function checkbox(parent, key, label, tip, {disabled}={}){
+  const id = 'cb-' + key;
+  const input = el('input', {type:'checkbox', id, onchange:() => { state[key] = input.checked; update(); }});
+  const wrap = el('label', {class:'custom-checkbox', for:id}, input, el('span', {}, label), tip ? info(tip, {filled:true}) : null);
+  parent.append(wrap);
+  bindings.push(() => { input.checked = !!state[key]; const d = disabled ? disabled() : false; input.disabled = d; wrap.classList.toggle('disabled', d); });
+}
+function reveal(parent, when){
+  const r = el('div', {class:'reveal'}); parent.append(r);
+  bindings.push(() => { r.hidden = !when(); });
+  return r;
+}
+function radioGroup(parent, key, items){
+  const name = 'radiogroup-' + key;
+  const wrap = el('div', {class:'radio-group-next', role:'radiogroup'});
+  items.forEach(it => {
+    const id = name + '-' + it.value;
+    const input = el('input', {type:'radio', name, id, value:it.value, onchange:() => {
+      state[key] = it.value;
+      if(key === 'modell' && it.value !== 'kombi') state.kombiAuszahlungPct = 0;   // Kombi-Kapitalauszahlung beim Wechsel verwerfen
+      update(); }});
+    wrap.append(el('div', {class:'radio-card'}, input,
+      el('label', {for:id}, el('span', {class:'rg-title'}, it.title), el('span', {class:'rg-label'}, it.big), it.tip ? info(it.tip) : null)));
+    bindings.push(() => { input.checked = state[key] === it.value; });
+  });
+  parent.append(wrap);
+}
+
+/* =====================================================================
+   5) FORMULAR
+   ===================================================================== */
+function yearsToPension(){ return Math.max(0, pensionDate(state).y - parseDate(config.stichtag).y); }
+let s, g, c;
+
+s = section('Grundeinstellungen', true);
+g = group(s, 'Pensionsalter ändern', 'Bei der BVK können sie zwischen 60 und 70 Jahren in Rente gehen. Das Pensionierungsalter hat einen Einfluss auf Ihre Rente.');
+numeric(g, 'alterJahre', {label:'Jahre', min:60, max:70, set:v => { state.alterJahre = v; if(v === 70) state.alterMonate = 0; }});
+numeric(g, 'alterMonate', {label:'Monate', min:0, max:() => state.alterJahre === 70 ? 0 : 11});
+const uezMoeglich = () => !config.uezAusgeschlossen && uezMonate(parseDate(config.geburtsdatum).y, state.alterJahre * 12 + state.alterMonate, config.geschlecht) > 0;
+c = plainComp(s); c.style.borderBottom = 'none'; c.style.marginBottom = '4px';
+checkbox(c, 'ueZ', 'Überbrückungszuschuss hinzufügen',
+  'Der Überbrückungszuschuss kompensiert bei einer Frühpensionierung die fehlende AHV-Rente bis zum Erreichen des ordentlichen Rentenalters (65).',
+  {disabled:() => !uezMoeglich()});
+badge(c.querySelector('.custom-checkbox')); expertOnly(c);
+// Standardmodus: Hinweis bei Frühpensionierung statt der Option
+c = plainComp(s); c.style.borderBottom = 'none'; c.style.marginBottom = '4px';
+const uezHinweis = el('div', {class:'mode-hint'},
+  el('span', {}, 'Bei einer Frühpensionierung ist ein Überbrückungszuschuss möglich.'),
+  el('button', {type:'button', class:'link-btn', onclick:() => setMode(true, 'cb-ueZ')}, 'Im Expertenmodus berechnen'));
+c.append(uezHinweis);
+bindings.push(() => { const zeigen = !state.expert && uezMoeglich(); uezHinweis.hidden = !zeigen; c.hidden = !zeigen; });
+g = group(s, 'Zinsprognose ändern', 'Zinssatz, mit welchem das Sparguthaben für die Hochrechnung verzinst wird. Bei einem Deckungsgrad von über 100% verzinst die BVK Ihr Sparguthaben mit 2%.');
+numeric(g, 'projZins', {label:'Projektionszins (%)', step:0.1, min:0, max:5, decimals:1});
+
+s = section('Änderungsmöglichkeiten vor Pensionierung');
+g = group(s, 'Sparguthaben aufstocken mit Einkauf', 'Einzahlungen auf Ihr Sparguthaben können Lücken füllen.');
+numeric(g, 'einkauf', {label:'Einkauf (CHF)', step:1000, tip:'Sie können Ihr Sparguthaben mit einem freiwilligen Einkauf erhöhen. Einkäufe können im Bereich «Meine Einkäufe» getätigt werden.'});
+g = group(s, 'Einkommen ändern', 'Simulieren sie Lohnänderungen und sehen Sie wie sich ihr Sparguthaben entwickelt.');
+numeric(g, 'bg', {label:'Beschäftigungsgrad (%)', step:5, min:0, max:100,
+  hint:() => state.bgStufenAktiv ? `Gilt ab sofort bis zur ersten Anpassung` : ''});
+badge(g.lastElementChild.querySelector('label')); expertOnly(g.lastElementChild);
+const bgFeld = g.lastElementChild;
+checkbox(g, 'bgStufenAktiv', 'Beschäftigungsgrad schrittweise anpassen',
+  'Simulieren Sie bis zu drei spätere Pensumsänderungen, z. B. im Hinblick auf eine Teilpensionierung. Jede Anpassung gilt ab dem Monat nach dem gewählten Alter.');
+badge(g.lastElementChild); expertOnly(g.lastElementChild);
+const stufenBox = reveal(g, () => state.expert && state.bgStufenAktiv); stufenBox.classList.add('stufen-box');
+const fmtAlter = am => `${Math.floor(am / 12)}/${am % 12}`;
+const parseAlter = t => { const [j, mo] = String(t).split(/[\/\s,.]+/).map(Number); return (j || 0) * 12 + Math.min(11, Math.max(0, mo || 0)); };
+for(let i = 0; i < MAX_STUFEN; i++){
+  const box = el('div', {class:'stufe'});
+  const head = el('div', {class:'stufe-head'}, el('span', {class:'stufe-nr'}, `${i + 1}. Anpassung`),
+    el('button', {type:'button', class:'link-btn', onclick:() => { state.bgStufen.splice(i, 1); update(); }}, 'Entfernen'));
+  box.append(head);
+  numeric(box, 'stufeAlter' + i, {label:'ab Alter (Jahre/Monate)', step:1, format:fmtAlter, parse:parseAlter,
+    min:() => Math.max(alterHeuteMonate(), i ? (state.bgStufen[i - 1]?.am ?? 0) + 1 : 0),
+    max:() => state.alterJahre * 12 + state.alterMonate - 1,
+    get:() => state.bgStufen[i]?.am ?? 0, set:v => { if(state.bgStufen[i]) state.bgStufen[i].am = v; },
+    hint:() => state.bgStufen[i] ? `Gültig ab ${stufeStartdatum(state.bgStufen[i].am)}` : ''});
+  numeric(box, 'stufeBg' + i, {label:'Beschäftigungsgrad (%)', step:5, min:0, max:100,
+    get:() => state.bgStufen[i]?.bg ?? 0, set:v => { if(state.bgStufen[i]) state.bgStufen[i].bg = v; }});
+  // Option Teilpensionierung
+  const tpCb = el('input', {type:'checkbox', id:'tp' + i, onchange:() => { if(state.bgStufen[i]){ state.bgStufen[i].tp = tpCb.checked; update(); } }});
+  const tpLbl = el('label', {class:'custom-checkbox', for:'tp' + i}, tpCb, el('span', {}, 'als Teilpensionierung'),
+    info('Im Verhältnis zur Reduktion des versicherten Lohnes wird ein Teil des Sparguthabens als Altersrente ausgerichtet. Möglich ab Alter 60, höchstens drei Schritte inkl. vollständiger Pensionierung.', {filled:true}));
+  const tpBox = el('div', {class:'tp-box'});
+  const tpMsgs = el('div');
+  box.append(tpLbl, tpMsgs, tpBox);
+  numeric(tpBox, 'stufeKap' + i, {label:'Kapitalbezug aus diesem Schritt (%)', step:5, min:0, max:100,
+    get:() => state.bgStufen[i]?.kapitalPct ?? 0, set:v => { if(state.bgStufen[i]) state.bgStufen[i].kapitalPct = v; }});
+  const uezCb = el('input', {type:'checkbox', id:'tpuez' + i, onchange:() => { if(state.bgStufen[i]){ state.bgStufen[i].uez = uezCb.checked; update(); } }});
+  const uezLbl = el('label', {class:'custom-checkbox', for:'tpuez' + i}, uezCb, el('span', {}, 'Überbrückungszuschuss in Höhe der Reduktion'));
+  const tpInfo = el('div', {class:'tp-info'});
+  tpBox.append(uezLbl, tpInfo);
+  bindings.push(() => {
+    const x = state.bgStufen[i]; if(!x) return;
+    tpCb.checked = !!x.tp; tpBox.hidden = !x.tp;
+    const uezDis = config.uezAusgeschlossen || x.am >= ahvAlterMonate(parseDate(config.geburtsdatum).y, config.geschlecht);
+    uezCb.checked = !!x.uez && !uezDis; uezCb.disabled = uezDis; uezLbl.classList.toggle('disabled', uezDis);
+    uezLbl.title = config.uezAusgeschlossen ? 'Vom Arbeitgeber ausgeschlossen' : '';
+    tpMsgs.innerHTML = (lastResult?.errors['stufeTp' + i] || []).map(e => `<div class="invalid-feedback">${e}</div>`).join('');
+    const p = lastResult?.tp.find(t => t.stufeIdx === i);
+    tpInfo.innerHTML = p ? `<span>${fmt(p.anteil * 100, 1)}% des Sparguthabens (${fmt(p.G)} CHF) werden verrentet</span>
+      <span>${state.modell === 'dyna' ? 'Startrente' : state.modell === 'kombi' ? 'Rente bis 75' : 'Teilrente'}: <b>${fmt(renteImJahr(p, p.am))} CHF/Jahr</b>${p.kapitalChf ? ` · Kapital ${fmt(p.kapitalChf)} CHF` : ''}${p.uezJahr ? ` · Üz ${fmt(p.uezJahr)} CHF/Jahr` : ''}</span>` : '';
+  });
+  stufenBox.append(box);
+  bindings.push(() => { box.hidden = !state.bgStufen[i]; });
+}
+const addBtn = el('button', {type:'button', class:'link-btn add', onclick:() => {
+  const vor = state.bgStufen[state.bgStufen.length - 1];
+  const pens = state.alterJahre * 12 + state.alterMonate;
+  const am = Math.min(pens - 1, Math.max(alterHeuteMonate() + 1, vor ? vor.am + 12 : alterHeuteMonate() + 6));
+  state.bgStufen.push({am, bg:Math.max(0, (vor ? vor.bg : state.bg) - 20)}); update();
+}}, '+ Anpassung hinzufügen');
+const tpModellNote = el('p', {class:'form-text tp-note'});
+bindings.push(() => {
+  const hatTp = state.bgStufenAktiv && state.bgStufen.some(x => x.tp);
+  tpModellNote.hidden = !hatTp;
+  tpModellNote.textContent = hatTp ? `Das Rentenmodell «${MODELLE[state.modell]}»${state.plus ? ' mit Option «Plus»' : ''} gilt für alle Schritte der Teilpensionierung. Es wird unter «Änderungsmöglichkeiten bei Pensionierung» gewählt.` : '';
+});
+const stufenChart = el('div', {class:'bg-chart', 'aria-hidden':'true'});
+const stufenImpact = el('p', {class:'form-text stufen-impact'});
+stufenBox.append(addBtn, tpModellNote, stufenChart, stufenImpact);
+bindings.push(() => {
+  addBtn.hidden = state.bgStufen.length >= MAX_STUFEN;
+  stufenChart.innerHTML = state.bgStufenAktiv ? bgChart(lastResult) : '';
+  if(state.expert && state.bgStufenAktiv && state.bgStufen.length){
+    const ohne = calculate({...state, bgStufenAktiv:false}).guthabenPension, diff = lastResult.guthabenPension - ohne;
+    stufenImpact.textContent = `Auswirkung auf das Sparguthaben bei Pensionierung: ${diff >= 0 ? '+' : ''}${fmt(diff)} CHF`;
+  } else stufenImpact.textContent = state.bgStufenAktiv ? 'Fügen Sie eine Anpassung hinzu, um den Pensumsverlauf zu simulieren.' : '';
+});
+/* Treppen-Diagramm des Pensums von heute bis Pensionierung */
+function bgChart(r){
+  if(!r) return '';
+  const W = 460, H = 92, padL = 30, padR = 8, top = 10, bot = 22;
+  const a0 = alterHeuteMonate(), a1 = r.alterMonate, span = Math.max(1, a1 - a0);
+  const x = am => padL + (Math.min(Math.max(am, a0), a1) - a0) / span * (W - padL - padR);
+  const yv = bg => top + (1 - bg / 100) * (H - top - bot);
+  const pts = [{am:a0, bg:bgImMonat(state, a0)}].concat(state.bgStufen.filter(p => p.am > a0 && p.am < a1).map(p => ({am:p.am, bg:p.bg, tp:p.tp})));
+  let d = `M${x(pts[0].am)},${yv(pts[0].bg)}`, area = '';
+  pts.forEach((p, i) => { const nx = i < pts.length - 1 ? pts[i + 1].am : a1; d += ` H${x(nx)}`; if(i < pts.length - 1) d += ` V${yv(pts[i + 1].bg)}`;
+    area += `<rect x="${x(p.am)}" y="${yv(p.bg)}" width="${x(nx) - x(p.am)}" height="${H - bot - yv(p.bg)}" fill="var(--primary)" opacity=".12"/>`;
+    area += `<text x="${(x(p.am) + x(nx)) / 2}" y="${yv(p.bg) - 3}" text-anchor="middle" font-size="10" fill="var(--primary)">${fmt(p.bg)}%</text>`;
+    if(p.tp) area += `<circle cx="${x(p.am)}" cy="${yv(p.bg)}" r="4" fill="var(--secondary)" stroke="var(--primary)" stroke-width="1"/>`; });
+  const ticks = [a0, ...pts.slice(1).map(p => p.am), a1].map((am, i, arr) =>
+    `<text x="${x(am)}" y="${H - 6}" font-size="9.5" fill="var(--muted)" text-anchor="${i === 0 ? 'start' : i === arr.length - 1 ? 'end' : 'middle'}">${i === 0 ? 'heute' : i === arr.length - 1 ? 'Pension ' + fmtAlter(am) : fmtAlter(am)}</text>`).join('');
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img">
+    <line x1="${padL}" y1="${yv(100)}" x2="${W - padR}" y2="${yv(100)}" stroke="var(--line)" stroke-dasharray="3 3"/>
+    <text x="${padL - 4}" y="${yv(100) + 3}" font-size="9.5" fill="var(--muted)" text-anchor="end">100%</text>
+    <line x1="${padL}" y1="${H - bot}" x2="${W - padR}" y2="${H - bot}" stroke="var(--line-strong)"/>
+    ${state.bgStufen.some(p => p.tp) ? `<circle cx="${W - padR - 96}" cy="6" r="3.5" fill="var(--secondary)" stroke="var(--primary)"/><text x="${W - padR - 88}" y="9" font-size="9.5" fill="var(--muted)">Teilpensionierung</text>` : ''}
+    ${area}<path d="${d}" fill="none" stroke="var(--primary)" stroke-width="2"/>${ticks}</svg>`;
+}
+numeric(g, 'lohn', {label:'Jahreslohn (CHF)', step:1000});
+numeric(g, 'lohnErhoehung', {label:'Jährliche Lohnerhöhung (%)', step:0.5, min:0, max:10, decimals:1});
+numeric(g, 'erwarteterLohn', {label:'Erwarteter Lohn bei Pensionierung (CHF)', step:1000,
+  get:() => Math.round(state.lohn * (1 + state.lohnErhoehung / 100) ** yearsToPension()),
+  set:v => { const n = yearsToPension(); state.lohnErhoehung = (n > 0 && state.lohn > 0 && v > state.lohn) ? Math.round(((v / state.lohn) ** (1 / n) - 1) * 1000) / 10 : 0; }});
+g = group(s, 'Kapital für Eigenheim beziehen', 'Wir unterstützen Sie bei der Finanzierung ihres Wohneigentums.');
+badge(g.parentElement.querySelector('.s-ig-title')); expertOnly(g.parentElement);
+numeric(g, 'wefRueck', {label:'Rückzahlung eines Vorbezugs (CHF)', step:1000, tip:'Rückzahlung des Kapitals, das Sie für Eigenheim bezogen haben. Melden Sie sich beim Kundendienst für eine Rückzahlung.'});
+numeric(g, 'wefVorbezug', {label:'Vorbezug für Wohneigentum (CHF)', step:1000, tip:'Gelder aus der 2. Säule können für die Finanzierung eines Eigenheimes vorbezogen werden (siehe «Mein Eigenheim»).'});
+g = group(s, 'Sparbeitrag ändern', 'Je nach Lebenssituation können sie 2 Prozentpunkte mehr oder weniger sparen.');
+radioGroup(g, 'sparplan', Object.entries(SPARPLAENE).map(([v,p]) => ({value:v, title:p.label, big:fmt(p.rate, 2) + '%'})));
+
+s = section('Änderungsmöglichkeiten bei Pensionierung');
+g = group(s, 'Rentenmodell wählen', 'Bei der BVK besteht die Option, einen höheren Umwandlungssatz zu wählen, dabei sinkt die Hinterbliebenenleistung von 2/3 auf 1/3 der Altersrente.');
+radioGroup(g, 'modell', [
+  {value:'norm', title:'Modell', big:'«Norm»', tip:'Standardrente, die ab Pensionierungszeitpunkt in gleichbleibender Höhe bis zum Lebensende ausgerichtet wird.'},
+  {value:'dyna', title:'Modell', big:'«Dyna»', tip:'Höhere Rente bei Rentenbeginn, die dann bis zum 75. Altersjahr kontinuierlich sinkt. Ab Alter 75 wird eine gleichbleibende Rente bis ans Lebensende ausbezahlt.'},
+  {value:'kombi', title:'Modell', big:'«Kombi»', tip:'Die Rente wird ab Rentenbeginn bis zum Alter 75 kapitalisiert. Sie bestimmen, wie viel sie von diesem Betrag als Einmalauszahlung beziehen wollen. Der Rest wird verrentet.'}
+]);
+const modellTpNote = reveal(g, () => state.expert && state.bgStufenAktiv && state.bgStufen.some(x => x.tp)); modellTpNote.style.padding = '0 0 10px';
+modellTpNote.append(el('small', {class:'form-text'}, 'Sie simulieren eine Teilpensionierung: Das gewählte Rentenmodell gilt für alle Schritte und muss vor dem ersten Schritt festgelegt werden.'));
+const kombiBox = reveal(g, () => state.modell === 'kombi'); kombiBox.style.padding = '0 0 8px';
+numeric(kombiBox, 'kombiAuszahlungPct', {label:'Einmalauszahlung des Barwerts (%)', step:10, min:0, max:100,
+  hint:'Der nicht ausbezahlte Teil des Barwerts wird bis 75 verrentet.'});
+checkbox(g, 'plus', 'Option «Plus»', 'Wahl eines höheren Umwandlungssatzes. Dadurch sinkt die Hinterbliebenenleistung von 2/3 auf 1/3 der Altersrente.');
+g = group(s, 'Modell «Flex»', 'Sie können bei der Alterspensionierung Ihr Sparguthaben ganz oder teilweise als Kapital beziehen.',
+  'Sie haben die Möglichkeit, per Kapitalbezug Teile ihres Sparguthabens oder auch das gesamte Sparguthaben auszahlen zu lassen - Im Gegensatz zur kapitalisierten Rente, die sie beim Modell Kombi beziehen können, wird dieser Kapitalbezug direkt vom Sparguthaben abgezogen.');
+numeric(g, 'kapitalPct', {label:'Kapitalbezug (%)', step:5, min:0, max:100, decimals:2,
+  get:() => Math.round((lastResult?.kapitalPct || 0) * 100) / 100, set:v => { state.kapitalPct = v; state.kapitalRef = 'pct'; }});
+numeric(g, 'kapitalChf', {label:'Kapitalbezug (CHF)', step:10000, max:() => Math.round(lastResult?.gNachUeZ || Infinity),
+  get:() => Math.round(lastResult?.kapitalChf || 0), set:v => { state.kapitalChf = v; state.kapitalRef = 'chf'; },
+  hint:'Der zuletzt geänderte Wert (CHF) wird als Referenz verwendet'});
+
+s = section('1. Säule (AHV) und Steuerberechnung hinzufügen');
+{ const t = s.titleEl; bindings.push(() => { t.textContent = state.expert ? '1. Säule (AHV) und Steuerberechnung hinzufügen' : '1. Säule (AHV) hinzufügen'; }); }
+c = plainComp(s);
+checkbox(c, 'ahv', '1. Säule hinzufügen (AHV)', 'Die AHV sichert die finanzielle Grundversorgung im Alter. Die Höhe der Rente wird von der AHV-Ausgleichskasse individuell berechnet. Die BVK hat die 13. AHV Rente bereits eingerechnet.');
+c = plainComp(s);
+checkbox(c, 'steuern', 'Steuerberechnung hinzufügen', 'Fügt die Einkommens- und Kapitalauszahlungssteuern hinzu. Berücksichtigt werden direkte Bundessteuern, Kantons- und Gemeindensteuern ohne Kirchensteuern.');
+badge(c.querySelector('.custom-checkbox')); expertOnly(c);
+c = plainComp(s);
+checkbox(c, 'weiteres', 'Weiteres Einkommen hinzufügen');
+badge(c.querySelector('.custom-checkbox')); expertOnly(c);
+numeric(reveal(c, () => state.weiteres), 'weiteresBetrag', {label:'Weiteres Einkommen pro Jahr (CHF)', step:1000});
+
+/* =====================================================================
+   6) AUSGABE
+   ===================================================================== */
+document.querySelectorAll('.number--icon').forEach(slot => slot.append(document.getElementById('iconTpl').content.cloneNode(true)));
+const outRows = document.getElementById('outRows');
+let lastResult = null, dynaOpen = false;
+
+function row(label, value, cls=''){
+  const monthly = state.flags.monatlich && typeof value === 'number';
+  return `<div class="output-row ${cls}"><span>${label}</span><span class="v">${typeof value === 'number' ? fmt(value) : value}${monthly ? `<small>${fmt(value / 12)} / Monat</small>` : ''}</span></div>`;
+}
+function renderOutput(r){
+  const gEl = document.getElementById('wGuthaben'), newG = fmt(r.guthabenPension);
+  if(gEl.textContent !== newG){ gEl.textContent = newG; gEl.classList.remove('flash'); void gEl.offsetWidth; gEl.classList.add('flash'); }
+  document.getElementById('wDatum').textContent = fmtDate(r.pensionsdatum.y, r.pensionsdatum.m, r.pensionsdatum.d);
+  const altTxt = state.alterMonate ? `${state.alterJahre}/${state.alterMonate}` : state.alterJahre;
+  const hatTp = r.tp.length > 0;
+  document.getElementById('wGuthabenText').textContent = hatTp ? `Verbleibendes Sparguthaben mit ${altTxt} (nach Teilpensionierung)` : `Voraussichtliches Sparguthaben mit ${altTxt}`;
+
+  let h = hatTp ? tpBlock(r) : '';
+  h += `<div class="out-block"><h4>Ihre jährliche Altersrente${hatTp ? ` ab vollständiger Pensionierung` : ''} - Modell «${MODELLE[state.modell]}»${state.plus ? ' «Plus»' : ''}</h4>`;
+  if(state.modell === 'norm'){
+    h += row(hatTp ? 'BVK Rente (alle Schritte)' : 'BVK Rente', r.renteStart);
+  } else if(state.modell === 'dyna'){
+    h += row(`BVK Startrente mit ${altTxt}`, r.renteStart, 'sep');
+    if(dynaOpen) h += dynaDetails(r);
+    h += row('BVK Rente ab 75', r.rente75, 'hl');
+    if((r.dynaJahre || []).length > 1) h += expander((r.dynaJahre.length - 1));
+  } else {
+    h += row(`BVK Rente bis 75`, r.renteBis75, 'sep');
+    h += row('BVK Rente ab 75', r.rente75, 'hl');
+  }
+  if(r.ueZ) h += row(`Überbrückungszuschuss bis AHV (${r.uezMon} Monate)`, r.ueZ);
+  if(eff.ahv) h += row(r.ahvAbStart ? 'AHV Rente' : 'AHV Rente (ab 65)', r.ahv);
+  if(r.weiteres) h += row('Weiteres Einkommen', r.weiteres);
+  if(!eff.steuern && (r.ueZ || (eff.ahv && r.ahvAbStart) || r.weiteres)) h += row('Total bei Rentenbeginn', r.totalJahr, 'total');
+  if(state.flags.ehegatten) h += row(`Ehegattenrente (${state.plus ? '1/3' : '2/3'})`, r.ehegattenrente);
+  h += '</div>';
+  if(eff.steuern) h += steuerBlock(r);
+
+  if(r.kapitalTotal > 0){
+    h += `<div class="out-block"><h4>Ihre Kapitalauszahlung</h4>`;
+    r.tp.forEach(p => { if(p.kapitalChf > 0) h += row(`Kapitalbezug ${p.schritt}. Schritt (${altLabel(p.am)})`, p.kapitalChf); });
+    if(r.kapitalChf > 0) h += row(hatTp ? `Kapitalbezug «Flex» bei Pensionierung (${fmt(r.kapitalPct, 2)}%)` : `Kapitalbezug «Flex» (${fmt(r.kapitalPct, 2)}%)`, r.kapitalChf);
+    if(r.kombiKapital > 0) h += row(`Kapitalisierte Rente «Kombi» (${fmt(state.kombiAuszahlungPct)}% des Barwerts${hatTp ? ', alle Schritte' : ''})`, r.kombiKapital);
+    if(eff.steuern){ h += row('Kapitalauszahlungssteuer', -r.steuerKap); h += row('Total nach Steuern', r.kapitalTotal - r.steuerKap, 'total'); }
+    h += '</div>';
+  }
+  if(state.flags.tarifinfo){
+    h += `<div class="out-block"><h4>Tarifgrundlagen</h4>`;
+    h += row('Jahrgang / Pensionsalter', `${r.jahrgang} / ${altTxt}`);
+    h += row('Umwandlungssatz', r.uws == null ? '–' : fmt(r.uws * 100, 4) + '%');
+    if(r.uwsCap != null) h += row('Cap-Umwandlungssatz ab 75', fmt(r.uwsCap * 100, 4) + '%');
+    if(r.renteBasis != null){
+      h += row('Startrente Jahresbasis (Sparguthaben × UWS)', r.renteBasis);
+      h += row('Ausweis Jahresrente', config.dynaMethode);
+      h += row('Abweichung 1. Rentenjahr', fmt((r.renteStart / r.renteBasis - 1) * 100, 2) + '%');
+    }
+    if(r.bwKombi != null) h += row('Barwertfaktor «Kombi»', fmt(r.bwKombi, 3));
+    if(r.barwert) h += row('Barwert Rente bis 75', r.barwert);
+    if(r.ueZKosten) h += row(`Finanzierung Üz (Faktor ${fmt(r.bwUez, 3)})`, -r.ueZKosten);
+    h += row('Sparguthaben für Rentenberechnung', r.gRente);
+    h += '</div>';
+  }
+  if(r.ueZKosten > 0 && !state.flags.tarifinfo) h += `<p class="out-note">Die Finanzierung des Überbrückungszuschusses reduziert das Sparguthaben um ${fmt(r.ueZKosten)} CHF.</p>`;
+  if(Object.keys(r.errors).length) h += `<div class="out-warn">${r.errors.alterJahre ? r.errors.alterJahre[0] : 'Ungültige Eingaben werden in der Berechnung nicht berücksichtigt.'}</div>`;
+  const nichtBeruecksichtigt = state.expert ? [] : gespeicherteExperteneinstellungen(state);
+  if(nichtBeruecksichtigt.length) h += `<p class="out-note">Berechnung im Standardmodus – gespeicherte Experteneinstellungen sind nicht berücksichtigt (${nichtBeruecksichtigt.join(', ')}).</p>`;
+  outRows.innerHTML = h;
+  const t = document.getElementById('dynaToggle');
+  if(t) t.onclick = () => { dynaOpen = !dynaOpen; renderOutput(lastResult); };
+  const tt = document.getElementById('taxToggle');
+  if(tt) tt.onclick = () => { steuerOpen = !steuerOpen; renderOutput(lastResult); };
+}
+let steuerOpen = false;
+function tpBlock(r){
+  const lbl = state.modell === 'dyna' ? 'Startrente' : state.modell === 'kombi' ? 'Rente bis 75' : 'Rente';
+  let h = `<div class="out-block"><h4>Ihre Pensionierung in ${r.teile.length} Schritten</h4><div class="tp-steps">`;
+  r.teile.forEach(p => {
+    h += `<div class="tp-step${p.final ? ' final' : ''}"><div class="tp-step-head"><span>${p.final ? 'Vollständige Pensionierung' : `${p.schritt}. Teilpensionierung`} mit ${altLabel(p.am)}</span><span>${fmt(p.bgVor)}% → ${fmt(p.bgNach)}%</span></div>`;
+    h += `<div class="tp-step-sub">ab ${p.final ? fmtDate(...(d => [d.y, d.m, d.d])(nextDay(r.pensionsdatum))) : p.datum} · ${p.final ? 'Restguthaben' : fmt(p.anteil * 100, 1) + '% des Sparguthabens'}: ${fmt(p.G)} CHF</div>`;
+    h += row(`${p.final ? 'Rente aus Restguthaben' : 'Teilrente'} (${lbl})`, Math.round(renteImJahr(p, p.am)));
+    if(p.uezJahr) h += row('Überbrückungszuschuss bis AHV', p.uezJahr);
+    if(p.kapitalChf) h += row('Kapitalbezug', p.kapitalChf);
+    if(p.kombiKapital) h += row('Kapitalisierte Rente «Kombi»', p.kombiKapital);
+    h += '</div>';
+  });
+  return h + '</div></div>';
+}
+function nextDay(d){ const x = new Date(d.y, d.m - 1, d.d + 1); return {y:x.getFullYear(), m:x.getMonth() + 1, d:x.getDate()}; }
+function taxRow(g, cls=''){
+  const teile = [g.lohn && 'inkl. Lohn', g.uez && 'inkl. Üz', g.ahv && 'inkl. AHV', g.weiteres && 'inkl. weiteres'].filter(Boolean).join(', ');
+  return `<div class="tax-row ${cls}"><span>${g.label}${teile ? `<small>${teile}</small>` : ''}</span><span>${fmt(g.brutto)}</span><span>${fmt(-g.steuer)}</span><span class="net">${fmt(g.netto)}</span></div>`;
+}
+function steuerBlock(r){
+  const rows = r.einkommen || [];
+  let h = `<div class="out-block"><h4>Einkommen und Steuern pro Jahr</h4><div class="tax-table">`;
+  h += `<div class="tax-row head"><span>Alter</span><span>Einkommen</span><span>Steuern</span><span>Netto</span></div>`;
+  if(rows.length <= 3){
+    rows.forEach((g, i) => { h += taxRow(g, i === rows.length - 1 && rows.length > 1 ? 'hl' : ''); });
+  } else {
+    h += taxRow(rows[0]);
+    if(steuerOpen){ h += '<div class="tax-sub">'; rows.slice(1, -1).forEach(g => { h += taxRow(g); }); h += '</div>'; }
+    h += taxRow(rows[rows.length - 1], 'hl');
+    h += `<button type="button" class="toggle-link" id="taxToggle" aria-expanded="${steuerOpen}"><span>${steuerOpen ? 'Steuern pro Jahr ausblenden' : `Alle ${rows.length - 2} weiteren Rentenjahre anzeigen`}</span><span class="chev${steuerOpen ? '' : ' down'}" aria-hidden="true"></span></button>`;
+  }
+  const min = Math.min(...rows.map(g => g.steuer)), max = Math.max(...rows.map(g => g.steuer));
+  h += `</div><p class="tax-note">${rows.length > 2 ? `Steuern je nach Rentenjahr zwischen ${fmt(min)} und ${fmt(max)} CHF. ` : ''}Einkommens-, Kantons- und Gemeindesteuern (Dummy-Tarif, im Portal via Taxware).</p></div>`;
+  return h;
+}
+function expander(n){
+  return `<button type="button" class="toggle-link" id="dynaToggle" aria-expanded="${dynaOpen}"><span>${dynaOpen ? 'Jährliche Renten ausblenden' : `Alle ${n} jährlichen Renten bis 75 anzeigen`}</span><span class="chev${dynaOpen ? '' : ' down'}" aria-hidden="true"></span></button>`;
+}
+function dynaDetails(r){
+  let h = '<div class="detail-rows">';
+  (r.dynaJahre || []).slice(1).forEach(j => { h += row(`BVK Rente mit ${j.alter}`, j.betrag); });
+  return h + '</div>';
+}
+
+/* =====================================================================
+   7) REFRESH
+   ===================================================================== */
+let eff = state;   // wirksamer Zustand gemäss Ansicht
+function update(typing=false){
+  eff = effectiveState(state);
+  lastResult = calculate(eff);
+  if(state.kapitalRef === 'pct') state.kapitalChf = Math.round(lastResult.kapitalChf); else state.kapitalPct = lastResult.kapitalPct;
+  numerics.forEach(n => {
+    const v = n.val();
+    if(!(typing && document.activeElement === n.input)) n.input.value = n.o.format ? n.o.format(v) : fmt(v, n.o.decimals).replace('−', '-');
+    n.dec.disabled = v <= n.mn(); n.inc.disabled = v >= n.mx();
+    if(typeof n.o.hint === 'function' && n.hintEl) n.hintEl.textContent = n.o.hint();
+    const errs = lastResult.errors[n.key] || [];
+    n.field.classList.toggle('invalid', errs.length > 0);
+    n.input.setAttribute('aria-invalid', String(errs.length > 0));
+    n.msgs.innerHTML = errs.map(e => `<div class="invalid-feedback">${e}</div>`).join('');
+  });
+  bindings.forEach(b => b());
+  renderModeBar();
+  renderOutput(lastResult);
+  document.getElementById('payload').textContent = JSON.stringify(payload(), null, 2);
+  save();
+}
+
+function renderModeBar(){
+  document.querySelectorAll('.mode-switch button').forEach(b => b.setAttribute('aria-checked', String((b.dataset.mode === 'expert') === !!state.expert)));
+  const n = document.getElementById('modeNotice'), list = state.expert ? [] : gespeicherteExperteneinstellungen(state);
+  n.hidden = !list.length;
+  n.innerHTML = '';
+  if(list.length){
+    n.append(el('div', {}, `Gespeicherte Experteneinstellungen werden im Standardmodus nicht berücksichtigt: ${list.join(', ')}.`),
+      el('button', {type:'button', class:'link-btn', onclick:() => setMode(true)}, 'Im Expertenmodus anzeigen'),
+      el('button', {type:'button', class:'link-btn', onclick:verwerfeExperteneinstellungen}, 'Verwerfen'));
+  }
+}
+document.querySelectorAll('.mode-switch button').forEach(b => {
+  b.addEventListener('click', () => setMode(b.dataset.mode === 'expert'));
+  b.addEventListener('keydown', e => { if(['ArrowLeft','ArrowRight'].includes(e.key)){ e.preventDefault(); setMode(!state.expert); document.querySelector(`.mode-switch button[data-mode="${state.expert ? 'expert' : 'standard'}"]`).focus(); } });
+});
+
+/* =====================================================================
+   8) DEMO-WERKZEUGE
+   ===================================================================== */
+const drawer = document.getElementById('drawer'), devBtn = document.getElementById('devBtn');
+const toggleDrawer = open => { drawer.classList.toggle('open', open); devBtn.setAttribute('aria-expanded', String(open)); };
+devBtn.onclick = () => toggleDrawer(!drawer.classList.contains('open'));
+document.getElementById('drawerClose').onclick = () => toggleDrawer(false);
+document.addEventListener('keydown', e => { if(e.key === 'Escape') toggleDrawer(false); });
+
+function buildConfigFields(){
+  const box = document.getElementById('cfgFields'); box.innerHTML = '';
+  Object.entries(CONFIG_LABELS).forEach(([k,[label,type,opts]]) => {
+    let input;
+    if(type === 'select'){
+      input = el('select', {'aria-label':label, style:'height:28px;border:1px solid var(--line);background:var(--paper);width:100%'});
+      opts.forEach(o => input.append(el('option', {value:o}, o)));
+      input.value = config[k];
+      input.addEventListener('change', () => { config[k] = input.value; update(); });
+    } else if(type === 'bool'){
+      input = el('input', {type:'checkbox', 'aria-label':label, style:'width:18px;height:18px;justify-self:start'});
+      input.checked = !!config[k];
+      input.addEventListener('change', () => { config[k] = input.checked; update(); });
+    } else {
+      input = el('input', {type:type || 'text', inputmode:type ? null : 'decimal', 'aria-label':label});
+      input.value = config[k];
+      input.addEventListener('change', () => {
+        config[k] = type ? input.value : parseNum(input.value);
+        if(k === 'jahreslohn') state.lohn = config[k];
+        if(k === 'beschaeftigungsgrad') state.bg = config[k];
+        update();
+      });
+    }
+    box.append(el('label', {}, label), input);
+  });
+  const fbox = document.getElementById('flagFields'); fbox.innerHTML = '';
+  Object.entries(FLAGS).forEach(([k,f]) => {
+    const id = 'flag-' + k;
+    const cb = el('input', {type:'checkbox', id, onchange:() => { state.flags[k] = cb.checked; update(); }});
+    cb.checked = !!state.flags[k];
+    fbox.append(el('label', {class:'custom-checkbox', for:id, style:'font-weight:400'}, cb, el('span', {}, f.label)));
+  });
+}
+function payload(){
+  const r = lastResult;
+  return { type:'pensionbeta', modus:state.expert ? 'experte' : 'standard', input:{...eff},
+    gespeicherteExperteneinstellungen:state.expert ? [] : gespeicherteExperteneinstellungen(state),
+    result:{
+      sparguthabenPension:Math.round(r.guthabenPension), pensionsdatum:fmtDate(r.pensionsdatum.y, r.pensionsdatum.m, r.pensionsdatum.d),
+      jahrgang:r.jahrgang, alterMonate:r.alterMonate, sparguthabenRente:Math.round(r.gRente),
+      umwandlungssatz:r.uws == null ? null : +r.uws.toFixed(6), umwandlungssatzCap:r.uwsCap == null ? null : +r.uwsCap.toFixed(6), barwertfaktorKombi:r.bwKombi, barwertKombi:r.barwert,
+      renteStart:r.renteStart, renteStartJahresbasis:r.renteBasis, dynaMethode:config.dynaMethode, dynaJahresrenten:r.dynaJahre, rente75:r.rente75, renteBis75:r.renteBis75, ehegattenrente:r.ehegattenrente,
+      kapitalbezugFlex:Math.round(r.kapitalChf), kapitalKombi:r.kombiKapital,
+      ueberbrueckung:{proJahr:Math.round(r.ueZ), monate:r.ueZ ? r.uezMon : 0, total:r.ueZTotal, finanzierung:Math.round(r.ueZKosten), barwertfaktor:r.bwUez},
+      beschaeftigungsgradVerlauf:r.bgVerlauf,
+      pensionierungsschritte:r.teile.map(p => ({schritt:p.schritt, vollstaendig:!!p.final, alter:altLabel(p.am), ab:p.datum, bgVor:p.bgVor, bgNach:p.bgNach,
+        anteilSparguthaben:+(p.anteil * 100).toFixed(2), sparguthaben:Math.round(p.G), umwandlungssatz:p.uws, rente1Jahr:Math.round(renteImJahr(p, p.am)),
+        rente75:p.rente75, kapital:Math.round(p.kapitalChf), kombiKapital:p.kombiKapital, ueberbrueckungProJahr:Math.round(p.uezJahr), ueberbrueckungFinanzierung:Math.round(p.uezKosten)})),
+      einkommenUndSteuern:r.einkommen,
+      dynaMonatsverlauf:r.dynaVerlauf, verlaufSparguthaben:r.verlauf },
+    errors:r.errors };
+}
+document.getElementById('copyPayload').onclick = async () => {
+  try{ await navigator.clipboard.writeText(JSON.stringify(payload(), null, 2)); toast('Payload kopiert.'); }
+  catch(e){ toast('Kopieren nicht möglich – bitte manuell markieren.'); }
+};
+document.getElementById('resetAll').onclick = () => {
+  config = {...DEFAULT_CONFIG}; state = defaultState(config);
+  try{ localStorage.removeItem(LS_KEY); }catch(e){}
+  buildConfigFields(); update(); toast('Demo auf Ausgangswerte zurückgesetzt.');
+};
+document.getElementById('printBtn').onclick = () => toast('PDF-Export ist in der Demo nicht angebunden.');
+document.getElementById('closeBtn').onclick = () => toast('Schliessen ist in der Demo ohne Funktion.');
+document.getElementById('themeBtn').onclick = () => {
+  const root = document.documentElement; root.dataset.theme = root.dataset.theme === 'dark' ? 'light' : 'dark';
+};
+let toastT;
+function toast(msg){ const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 3000); }
+
+buildConfigFields();
+update();
+</script>
+</body>
+</html>
+
+</body></html>
